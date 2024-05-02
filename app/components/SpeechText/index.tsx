@@ -1,4 +1,5 @@
 'use client'
+import _ from 'lodash'
 import React, { useEffect, useMemo, useCallback, useState } from 'react'
 import { useMainStore } from '@/(pages)/main/providers'
 import { fetchTokenOrRefresh } from '@/shared/API'
@@ -9,57 +10,30 @@ const speechsdk = require('microsoft-cognitiveservices-speech-sdk')
 let recordOffset = 0
 export default function SpeechText({}: {}) {
     const { speechToken, isRecording, updateIsRecording, updateSpeechToken } = useMainStore(state => state)
-    const [recordedText, setRecordedText] = useState<string>('')
-    const [currentRecording, setCurrentRecording] = useState<string>('')
-    // const [recordOffset, setRecordOffset] = useState<number>(0)
+    const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
     const [stateRecognizer, setStateRecognizer] = useState<Record<string, any>>()
-    const [triggerMic, setTriggerMic] = useState(false)
-
-    // useEffect(()=>{
-    //     setRecordedText((text)=>{
-    //         return `${text}\n\n${currentRecording}`
-    //     })
-    // }, [recordOffset])
 
     let recordingIdleTimer: any = null
     const handleRecording = (speechRecognitionResult: Record<string, any>) => {
         console.log('SpeechRecognitionResult', speechRecognitionResult)
-        const { privText, privOffset } = speechRecognitionResult || {}
-        if (privText) {
-            // setRecordOffset(privOffset)
-            if (!recordOffset) recordOffset = privOffset
-            if (recordOffset === privOffset) {
-                setCurrentRecording(privText)
-            } else {
-                setRecordedText(text => `${text}\n\n${privText}`)
-                setCurrentRecording('')
-                recordOffset = privOffset
-            }
-
-            // if(!!recordOffset && privOffset !== recordOffset){
-            //     setRecordText((text)=>`${text}\n\n${privText}`)
-            // }else{
-            //     console.log(`recordOffset`, recordOffset, privOffset, !recordOffset)
-            //     setRecordText(privText)
-            // }
+        const { privText, privOffset, text, offset } = speechRecognitionResult || {}
+        if (privText || text) {
+            setRecordedTextList(recordedTextList => {
+                const indexCurrent = _.findIndex(recordedTextList, { offset: privOffset || offset })
+                if (indexCurrent > -1) {
+                    recordedTextList[indexCurrent].text = privText || text
+                    return [...recordedTextList]
+                } else {
+                    return [...recordedTextList, { offset: privOffset || offset, text: privText || text }]
+                }
+            })
         }
 
         clearTimeout(recordingIdleTimer)
         recordingIdleTimer = setTimeout(() => {
-            console.log(`recordingIdleTimer`, stateRecognizer)
-            if (stateRecognizer) {
-                helperPauseMic(stateRecognizer)
-                setTriggerMic(false)
-            }
+            updateIsRecording(false)
         }, recordingIdleGap)
     }
-
-    const handleStopMic = useCallback(() => {
-        if (stateRecognizer) {
-            helperPauseMic(stateRecognizer)
-            setTriggerMic(false)
-        }
-    }, [stateRecognizer])
 
     useEffect(() => {
         if (!speechToken) {
@@ -74,34 +48,67 @@ export default function SpeechText({}: {}) {
             }
             console.log(`speechToken`, speechToken)
             syncSpeechToken()
-        } else {
-            console.log('speechToken in MainState', speechToken)
-            updateIsRecording(triggerMic)
         }
-    }, [triggerMic])
+    }, [])
 
     useEffect(() => {
         if (isRecording) {
-            helperSttFromMic(stateRecognizer, speechToken || {}, handleRecording, (recognizer: Record<string, any>) => {
-                if (recognizer) {
-                    setStateRecognizer(recognizer)
+            if (!speechToken) {
+                const syncSpeechToken = async () => {
+                    const { authToken, region } = await helperGetSpeechTokenAsync()
+                    if (authToken && region) {
+                        updateSpeechToken({ authToken, region })
+                        helperSttFromMic(
+                            stateRecognizer,
+                            { authToken, region },
+                            handleRecording,
+                            (recognizer: Record<string, any>) => {
+                                if (recognizer) {
+                                    setStateRecognizer(recognizer)
+                                }
+                            }
+                        )
+                    }
                 }
-            })
+                console.log(`speechToken`, speechToken)
+                syncSpeechToken()
+            } else {
+                helperSttFromMic(
+                    stateRecognizer,
+                    speechToken || {},
+                    handleRecording,
+                    (recognizer: Record<string, any>) => {
+                        if (recognizer) {
+                            setStateRecognizer(recognizer)
+                        }
+                    }
+                )
+            }
+        } else if (stateRecognizer) {
+            helperPauseMic(stateRecognizer)
         }
     }, [isRecording])
 
     return (
         <div className="w-96 flex flex-col">
-            <div className="flex talkCircle">
-                {recordOffset}. {recordedText}
-                {currentRecording ? `\n\n${currentRecording}` : ''}
+            <div className="flex talkCircle flex-col gap-2">
+                {_.map(recordedTextList, (recordItem, recordIndex) => {
+                    return (
+                        <div key={`record-${recordIndex}`} className="flex">
+                            {recordItem?.text || ''}
+                        </div>
+                    )
+                })}
             </div>
             <div className="flex functional flex-row justify-between items-center">
                 <div
                     className="flex pause w-5 h-5 bg-slate-800 cursor-pointer rounded-full"
-                    onClick={() => setTriggerMic(true)}
+                    onClick={() => updateIsRecording(true)}
                 ></div>
-                <div className="flex stop w-5 h-5 bg-red-800 cursor-pointer rounded-full" onClick={handleStopMic}></div>
+                <div
+                    className="flex stop w-5 h-5 bg-red-800 cursor-pointer rounded-full"
+                    onClick={() => updateIsRecording(false)}
+                ></div>
             </div>
         </div>
     )
@@ -143,16 +150,7 @@ const helperSttFromMic = async (
         return
     }
 
-    // this.setState({
-    //     displayText: 'speak into your microphone...'
-    // });
-
     recognizer.recognizing = function (s: any, e: Record<string, any>) {
-        // console.log(`this is s`, s)
-        // console.log(`this is e`, e)
-        // console.log('RECOGNIZING: ' + e.result.text)
-        // console.log('Offset in Ticks: ' + e.result.offset)
-        // console.log('Duration in Ticks: ' + e.result.duration)
         console.log('Duration in Ticks: ', e.result)
         recording(e?.result)
     }
