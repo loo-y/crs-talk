@@ -6,21 +6,52 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "eslint": "./node_modules/.bin/eslint \"app/**/*.{js,jsx,ts,tsx}\" --ignore-pattern \"./lib/\"",
+    "check-types": "tsc --noemit",
+    "eslint:commit": "git diff --cached --name-only | grep -E 'app.*\\.[jt]sx?$' | xargs ./node_modules/.bin/eslint --quiet",
+    "eslint:quiet": "./node_modules/.bin/eslint \"app/**/*.{js,jsx,ts,tsx}\" --ignore-pattern \"app/lib/\" --quiet",
+    "prettier:single": "./node_modules/.bin/prettier --single-quote --no-semi --trailing-comma es5 --print-width 120 --tab-width 4 --arrow-parens avoid --write",
+    "prettier": "./node_modules/.bin/prettier --single-quote --no-semi --trailing-comma es5 --print-width 120 --tab-width 4 --arrow-parens avoid --write \"app/**/*.{js,jsx,ts,tsx}\"",
+    "prettier:check": "npm run prettier -- --list-different",
+    "lint-staged": "lint-staged"
+  },
+  "precommit": "lint-staged",
+  "lint-staged": {
+    "app/**/*.{js,jsx,ts,tsx}": [
+      "npm run eslint:commit",
+      "prettier --single-quote --no-semi --trailing-comma es5 --print-width 120 --tab-width 4 --arrow-parens avoid --write \"!app/lib/**\"",
+      "git add"
+    ]
+  },
+  "engines": {
+    "node": ">=20.0.0"
   },
   "dependencies": {
+    "lodash": "^4.17.21",
+    "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18",
-    "next": "14.2.3"
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.3"
+    "typescript": "^5",
+    "@types/lodash": "^4.17.0",
+    "@typescript-eslint/eslint-plugin": "^7.3.1",
+    "@typescript-eslint/parser": "^7.3.1",
+    "cross-env": "7.0.3",
+    "lint-staged": "^15.2.2",
+    "pre-commit": "^1.2.2",
+    "prettier": "^3.2.5",
+    "ts-loader": "^9.5.1",
+    "ts-node": "10.9.2",
+    "ts-node-dev": "2.0.0"
   }
 }
