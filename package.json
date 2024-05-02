@@ -28,30 +28,33 @@
     "node": ">=20.0.0"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
     "lodash": "^4.17.21",
+    "microsoft-cognitiveservices-speech-sdk": "^1.36.0",
     "next": "14.2.3",
     "react": "^18",
     "react-dom": "^18",
+    "universal-cookie": "^7.1.4",
     "zustand": "^4.5.2"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.0",
     "@types/node": "^20",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "eslint": "^8",
-    "eslint-config-next": "14.2.3",
-    "postcss": "^8",
-    "tailwindcss": "^3.4.1",
-    "typescript": "^5",
-    "@types/lodash": "^4.17.0",
     "@typescript-eslint/eslint-plugin": "^7.3.1",
     "@typescript-eslint/parser": "^7.3.1",
     "cross-env": "7.0.3",
+    "eslint": "^8",
+    "eslint-config-next": "14.2.3",
     "lint-staged": "^15.2.2",
+    "postcss": "^8",
     "pre-commit": "^1.2.2",
     "prettier": "^3.2.5",
+    "tailwindcss": "^3.4.1",
     "ts-loader": "^9.5.1",
     "ts-node": "10.9.2",
-    "ts-node-dev": "2.0.0"
+    "ts-node-dev": "2.0.0",
+    "typescript": "^5"
   }
 }

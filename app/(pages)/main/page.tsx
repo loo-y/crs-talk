@@ -1,19 +1,13 @@
 'use client'
 import { useMainStore } from './providers'
 import { MainStoreProvider } from './providers'
+import SpeechText from '@/components/SpeechText'
 const Main = () => {
-    const { count, incrementCount, decrementCount } = useMainStore(state => state)
+    const { isloading, updateIsLoading } = useMainStore(state => state)
 
     return (
         <div>
-            Count: {count}
-            <hr />
-            <button type="button" onClick={() => void incrementCount()}>
-                Increment Count
-            </button>
-            <button type="button" onClick={() => void decrementCount()}>
-                Decrement Count
-            </button>
+            <SpeechText />
         </div>
     )
 }

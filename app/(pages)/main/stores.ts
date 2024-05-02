@@ -1,28 +1,56 @@
 import { createStore } from 'zustand/vanilla'
+import type { SpeechToken } from '@/utils/interface'
 
 type MainState = {
-    count: number
+    isloading?: boolean
+    isRecording?: boolean
+    isAssistantSpeaking?: boolean
+    speechToken?: SpeechToken
 }
 
 type MainActions = {
-    decrementCount: () => void
-    incrementCount: () => void
+    updateIsLoading: (loading: boolean) => void
+    updateIsRecording: (recording: boolean) => void
+    updateIsAssistantSpeaking: (speaking: boolean) => void
+    updateSpeechToken: (token: SpeechToken) => void
 }
 
 export type MainStore = MainState & MainActions
 
 export const initMainStore = (): MainState => {
-    return { count: new Date().getFullYear() }
+    return { isloading: false }
 }
 
-const defaultInitState: MainState = {
-    count: 0,
-}
+const defaultInitState: MainState = {}
 
 export const createMainStore = (initState: MainState = defaultInitState) => {
-    return createStore<MainStore>()(set => ({
-        ...initState,
-        decrementCount: () => set(state => ({ count: state.count - 1 })),
-        incrementCount: () => set(state => ({ count: state.count + 1 })),
-    }))
+    return createStore<MainStore>()(set => {
+        return {
+            ...initState,
+            updateIsLoading: (loading: boolean) =>
+                set(state => {
+                    return {
+                        isloading: loading,
+                    }
+                }),
+            updateIsRecording: (recording: boolean) =>
+                set(state => {
+                    return {
+                        isRecording: recording,
+                    }
+                }),
+            updateIsAssistantSpeaking: (speaking: boolean) =>
+                set(state => {
+                    return {
+                        isAssistantSpeaking: speaking,
+                    }
+                }),
+            updateSpeechToken: (token: SpeechToken) =>
+                set(state => {
+                    return {
+                        speechToken: token,
+                    }
+                }),
+        }
+    })
 }
