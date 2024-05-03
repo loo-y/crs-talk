@@ -1,5 +1,5 @@
 import { createStore } from 'zustand/vanilla'
-import type { SpeechToken } from '@/utils/interface'
+import type { SpeechToken } from '@/shared/interface'
 
 type MainState = {
     isloading?: boolean

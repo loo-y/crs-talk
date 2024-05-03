@@ -2,9 +2,9 @@
 import _ from 'lodash'
 import React, { useEffect, useMemo, useCallback, useState } from 'react'
 import { useMainStore } from '@/(pages)/main/providers'
-import { fetchTokenOrRefresh } from '@/shared/API'
-import type { SpeechToken } from '@/utils/interface'
-import { recordingIdleGap } from '@/utils/constants'
+import { fetchTokenOrRefresh } from '@/shared/Fetches'
+import type { SpeechToken } from '@/shared/interface'
+import { recordingIdleGap } from '@/shared/constants'
 import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
 
 let recordOffset = 0

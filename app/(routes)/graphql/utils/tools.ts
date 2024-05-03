@@ -1,6 +1,7 @@
 import { IMessage, Roles } from '../types'
 import _ from 'lodash'
 import DuckDuckGoSearch from '../lib/duckduckgoSearch'
+export * from '@/shared/tools'
 
 export const mergeMessages = (messages: IMessage[] | undefined): IMessage[] => {
     const mergedMessages: IMessage[] = []
@@ -79,8 +80,6 @@ export const fetchEventStream = async ({
         reader.read().then(processStream)
     })
 }
-
-export const sleep = (sec: number) => new Promise(resolve => setTimeout(resolve, sec * 1000))
 
 export const getInternetSerchResult = async (searchText: string, count?: number): Promise<string> => {
     const resultList = []
