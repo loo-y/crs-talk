@@ -14,8 +14,8 @@ const AudioVisualizer = ({ isMicOn }: { isMicOn: boolean }) => {
     const [audioContext, setAudioContext] = useState<any>(null)
     // let audioContext: any = null
     const mount = useRef<HTMLDivElement>(null!)
-    const width = 384,
-        height = 600
+    const width = 320,
+        height = 500
 
     // useEffect(()=>{
     //     // Audio context
@@ -83,7 +83,7 @@ const AudioVisualizer = ({ isMicOn }: { isMicOn: boolean }) => {
             navigator.webkitGetUserMedia ||
             navigator.mozGetUserMedia
         if (!__getUserMedia__) {
-            alert(`Your browser does not support getUserMedia.`)
+            // alert(`Your browser does not support getUserMedia.`)
             console.error('Your browser does not support getUserMedia.')
             return
         }

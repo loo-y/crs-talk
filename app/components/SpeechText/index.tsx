@@ -147,7 +147,7 @@ export default function SpeechText({}: {}) {
     }, [recordedTextList, isRecording])
 
     return (
-        <div className="w-96 flex flex-col">
+        <div className=" w-[20rem] flex flex-col">
             <div className="flex talkCircle flex-col gap-2">
                 {_.map(recordedTextList, (recordItem, recordIndex) => {
                     return (
@@ -160,21 +160,32 @@ export default function SpeechText({}: {}) {
                 {/* <TextVisualizer textSpeed={textSpeed} /> */}
             </div>
             <div className="flex functional flex-row justify-between items-center">
-                <div
-                    className="flex pause w-5 h-5 bg-slate-800 cursor-pointer rounded-full"
-                    // onClick={() => updateIsRecording(true)}
-                ></div>
-                {talkStart ? (
+                <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
                     <div
-                        className="flex stop w-5 h-5 bg-red-800 cursor-pointer rounded-full"
-                        onClick={() => updateTalkStart(false)}
+                        className="flex pause w-5 h-5 bg-slate-800 cursor-pointer rounded-full"
+                        // onClick={() => updateIsRecording(true)}
                     ></div>
-                ) : (
-                    <div
-                        className="flex stop w-5 h-5 bg-green-800 cursor-pointer rounded-full"
-                        onClick={() => updateTalkStart(true)}
-                    ></div>
-                )}
+                    <div className=""></div>
+                </div>
+                <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
+                    {talkStart ? (
+                        <>
+                            <div className="">Stop</div>
+                            <div
+                                className="flex stop w-5 h-5 bg-red-800 cursor-pointer rounded-full"
+                                onClick={() => updateTalkStart(false)}
+                            ></div>
+                        </>
+                    ) : (
+                        <>
+                            <div className="">Start</div>
+                            <div
+                                className="flex stop w-5 h-5 bg-green-800 cursor-pointer rounded-full"
+                                onClick={() => updateTalkStart(true)}
+                            ></div>
+                        </>
+                    )}
+                </div>
             </div>
         </div>
     )
