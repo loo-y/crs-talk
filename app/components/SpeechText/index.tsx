@@ -5,7 +5,7 @@ import { useMainStore } from '@/(pages)/main/providers'
 import { fetchTokenOrRefresh } from '@/shared/API'
 import type { SpeechToken } from '@/utils/interface'
 import { recordingIdleGap } from '@/utils/constants'
-const speechsdk = require('microsoft-cognitiveservices-speech-sdk')
+import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
 
 let recordOffset = 0
 export default function SpeechText({}: {}) {
@@ -70,7 +70,7 @@ export default function SpeechText({}: {}) {
                         )
                     }
                 }
-                console.log(`speechToken`, speechToken)
+                // console.log(`speechToken`, speechToken)
                 syncSpeechToken()
             } else {
                 helperSttFromMic(
@@ -136,13 +136,13 @@ const helperSttFromMic = async (
         return
     }
 
-    const speechConfig = speechsdk.SpeechConfig.fromAuthorizationToken(speechToken.authToken, speechToken.region)
+    const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(speechToken.authToken, speechToken.region)
     speechConfig.speechRecognitionLanguage = 'zh-CN'
 
     let recognizer
     if (!stateRecognizer) {
-        const audioConfig = speechsdk.AudioConfig.fromDefaultMicrophoneInput()
-        recognizer = new speechsdk.SpeechRecognizer(speechConfig, audioConfig)
+        const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
+        recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig)
     } else {
         recognizer = stateRecognizer
         recognizer.startContinuousRecognitionAsync()
