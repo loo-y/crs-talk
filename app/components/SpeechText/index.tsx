@@ -140,7 +140,7 @@ export default function SpeechText({}: {}) {
                         setStateTTSSpeechConfig(speechConfig)
                     })
                     // setTalkMessageList(talkMessageList => [...talkMessageList, {role: "assistant", content: streamText}])
-                    updateIsRecording(true)
+                    talkStart && updateIsRecording(true)
                 })
             }
         }
@@ -268,7 +268,7 @@ const helperSttFromMic = async (
     } else {
         recognizer = stateRecognizer
         recognizer.startContinuousRecognitionAsync()
-        callback && callback()
+        callback && callback(recognizer)
         return
     }
 
@@ -306,8 +306,8 @@ const helperTts = async (
                 speechToken?.authToken || ``,
                 speechToken?.region || ``
             )
-            speechConfig.speechSynthesisLanguage = 'wuu-CN' // 'zh-CN'
-            speechConfig.speechSynthesisVoiceName = 'wuu-CN-XiaotongNeural' // 'zh-CN-XiaoxiaoMultilingualNeural'
+            speechConfig.speechSynthesisLanguage = 'zh-CN' // 'wuu-CN' //
+            speechConfig.speechSynthesisVoiceName = 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
 
             typeof callback === 'function' && callback(speechConfig)
         } else {
@@ -360,16 +360,17 @@ const helperGetAIResponse = async ({
         fetchAIGraphqlStream({
             messages,
             isStream: true,
-            queryOpenAI: true,
-            openAIParams: {
-                baseUrl: 'http://localhost:11434/v1/',
-                // model: 'qwen:7b',
-                // model: "llama3",
-                model: 'phi3:3.8b-mini-instruct-4k-fp16',
-                // model: 'hfl/llama-3-chinese-8b-instruct-gguf',
-                // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
-                apiKey: 'lm-studio',
-            },
+            // queryOpenAI: true,
+            // openAIParams: {
+            //     baseUrl: 'http://localhost:11434/v1/',
+            //     // model: 'qwen:7b',
+            //     // model: "llama3",
+            //     model: 'phi3:3.8b-mini-instruct-4k-fp16',
+            //     // model: 'hfl/llama-3-chinese-8b-instruct-gguf',
+            //     // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
+            //     apiKey: 'lm-studio',
+            // },
+            queryMoonshot: true,
             maxTokens: 200,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
                 console.log('streamHandler', streamResult)
