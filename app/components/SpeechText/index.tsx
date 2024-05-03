@@ -13,6 +13,7 @@ export default function SpeechText({}: {}) {
     )
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
     const [stateRecognizer, setStateRecognizer] = useState<Record<string, any>>()
+    const [stateTTSSpeechConfig, setStateTTSSpeechConfig] = useState<Record<string, any>>()
 
     let recordingIdleTimer: any = null
     const handleRecording = (speechRecognitionResult: Record<string, any>) => {
@@ -88,15 +89,27 @@ export default function SpeechText({}: {}) {
         } else if (stateRecognizer) {
             helperPauseMic(stateRecognizer)
             if (talkStart) {
+                let streamText = ''
                 // fetch ai response
                 helperGetAIResponse({
                     messages: [{ role: 'user', content: _.map(recordedTextList, 'text').join('\n') }],
-                    onStream: (responseStream: string) => {
-                        console.log('onStream', responseStream)
+                    onStream: async (responseStream: string) => {
+                        const text = _.trim(responseStream)
+                        console.log('onStream', responseStream, text)
+
+                        if (text) {
+                            streamText += text
+                            // await helperTts(responseStream, stateSynthesizer, speechToken, (synthesizer)=>{
+                            //     setStateSynthesizer(synthesizer)
+                            // })
+                        }
                     },
-                }).then(res => {
+                }).then(async res => {
                     // after response completed, continue recording
                     console.log(res)
+                    await helperTts(streamText, stateTTSSpeechConfig, speechToken, speechConfig => {
+                        setStateTTSSpeechConfig(speechConfig)
+                    })
                     updateIsRecording(true)
                 })
             }
@@ -195,6 +208,66 @@ const helperPauseMic = async (recognizer: Record<string, any>) => {
     recognizer.stopContinuousRecognitionAsync()
 }
 
+const helperTts = async (
+    inputText: string,
+    stateSpeechConfig: any,
+    speechToken?: SpeechToken,
+    callback?: (synthesizer: any) => void
+) => {
+    if (!speechToken?.authToken || !speechToken?.region) {
+        return
+    }
+
+    return new Promise((resolve, reject) => {
+        let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
+        let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined
+        if (!stateSpeechConfig) {
+            speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
+                speechToken?.authToken || ``,
+                speechToken?.region || ``
+            )
+            speechConfig.speechSynthesisLanguage = 'zh-CN'
+            speechConfig.speechSynthesisVoiceName = 'zh-CN-XiaochenMultilingualNeural'
+            typeof callback === 'function' && callback(speechConfig)
+        } else {
+            speechConfig = stateSpeechConfig
+        }
+
+        const audio = new SpeechSDK.SpeakerAudioDestination()
+        audio.onAudioEnd = () => {
+            console.log(`onAudioEnd`)
+            resolve(true)
+        }
+        audio.onAudioStart = () => {
+            console.log(`onAudioStart`)
+        }
+
+        if (speechConfig) {
+            const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
+            synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
+            synthesizer?.speakTextAsync(
+                inputText,
+                function (result) {
+                    if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
+                        console.log('Speech synthesized for text: ' + inputText)
+                    } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
+                        console.log('Error: ' + result.errorDetails)
+                    }
+                    window.console.log(result)
+                    synthesizer?.close()
+                    synthesizer = undefined
+                },
+                function (err) {
+                    console.log(`reject`, err)
+                    synthesizer?.close()
+                    synthesizer = undefined
+                    reject(err)
+                }
+            )
+        }
+    })
+}
+
 const helperGetAIResponse = async ({
     messages,
     onStream,
@@ -212,6 +285,7 @@ const helperGetAIResponse = async ({
                 model: 'qwen:7b',
                 apiKey: 'local request no need apiKey',
             },
+            maxTokens: 100,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
                 console.log('streamHandler', streamResult)
                 const { data } = streamResult || {}
