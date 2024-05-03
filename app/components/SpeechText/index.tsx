@@ -13,6 +13,15 @@ export default function SpeechText({}: {}) {
     const { speechToken, isRecording, talkStart, updateTalkStart, updateIsRecording, updateSpeechToken } = useMainStore(
         state => state
     )
+    const [talkMessageList, setTalkMessageList] = useState<
+        { role: 'user' | 'assistant' | 'system'; content: string }[]
+    >([
+        {
+            role: 'system',
+            content:
+                '你现在是我的朋友，我们正在饭后聊天，请用尽量简短和轻松的语气和我对话，并且请不要在对话中让人发现你是AI',
+        },
+    ])
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
     const [stateRecognizer, setStateRecognizer] = useState<Record<string, any>>()
     const [stateTTSSpeechConfig, setStateTTSSpeechConfig] = useState<Record<string, any>>()
@@ -93,10 +102,17 @@ export default function SpeechText({}: {}) {
         } else if (stateRecognizer) {
             helperPauseMic(stateRecognizer)
             if (talkStart) {
+                const userContent = _.map(recordedTextList, 'text').join(', ')
+                const newMessageList = [...talkMessageList, { role: 'user', content: userContent }] as {
+                    role: 'user' | 'assistant'
+                    content: string
+                }[]
+                setTalkMessageList(newMessageList)
+                setRecordedTextList([])
                 let streamText = ''
                 // fetch ai response
                 helperGetAIResponse({
-                    messages: [{ role: 'user', content: _.map(recordedTextList, 'text').join('\n') }],
+                    messages: newMessageList,
                     onStream: async (responseStream: string) => {
                         const text = _.trim(responseStream).replace(/\*/g, '')
                         console.log('onStream', text)
@@ -106,6 +122,15 @@ export default function SpeechText({}: {}) {
                             // await helperTts(responseStream, stateSynthesizer, speechToken, (synthesizer)=>{
                             //     setStateSynthesizer(synthesizer)
                             // })
+                            setTalkMessageList(talkMessageList => {
+                                if (talkMessageList?.at(-1)?.role === 'assistant') {
+                                    const newList = [...talkMessageList]
+                                    newList!.at(-1)!.content = streamText
+                                    return newList
+                                } else {
+                                    return [...talkMessageList, { role: 'assistant', content: streamText }]
+                                }
+                            })
                         }
                     },
                 }).then(async res => {
@@ -114,6 +139,7 @@ export default function SpeechText({}: {}) {
                     await helperTts(streamText, stateTTSSpeechConfig, speechToken, speechConfig => {
                         setStateTTSSpeechConfig(speechConfig)
                     })
+                    // setTalkMessageList(talkMessageList => [...talkMessageList, {role: "assistant", content: streamText}])
                     updateIsRecording(true)
                 })
             }
@@ -147,15 +173,15 @@ export default function SpeechText({}: {}) {
     }, [recordedTextList, isRecording])
 
     return (
-        <div className=" w-[20rem] flex flex-col">
+        <div className=" w-[20rem] flex flex-col gap-2">
             <div className="flex talkCircle flex-col gap-2">
-                {_.map(recordedTextList, (recordItem, recordIndex) => {
+                {/* {_.map(recordedTextList, (recordItem, recordIndex) => {
                     return (
                         <div key={`record-${recordIndex}`} className="flex">
                             {recordItem?.text || ''}
                         </div>
                     )
-                })}
+                })} */}
                 <AudioVisualizer isMicOn={isRecording || false} />
                 {/* <TextVisualizer textSpeed={textSpeed} /> */}
             </div>
@@ -186,6 +212,25 @@ export default function SpeechText({}: {}) {
                         </>
                     )}
                 </div>
+            </div>
+            <div className="flex flex-col overflow-x-hidden overflow-y-scroll max-h-52 h-fit px-2 gap-2">
+                {_.map(talkMessageList, (talkItem, talkIndex) => {
+                    if (talkItem.role == `system`) {
+                        return null
+                    }
+                    return (
+                        <div key={`talk-${talkIndex}`} className="flex flex-row items-start text-sm">
+                            <div className="flex w-16">{talkItem.role == 'assistant' ? `AI` : `用户`} :</div>
+                            <div className="flex flex-1">{talkItem?.content || ''}</div>
+                        </div>
+                    )
+                })}
+                {_.isEmpty(recordedTextList) ? null : (
+                    <div className="flex flex-row items-start text-sm">
+                        <div className="flex w-16">{`用户`} :</div>
+                        <div className="flex flex-1">{_.map(recordedTextList, 'text').join(', ') || ''}</div>
+                    </div>
+                )}
             </div>
         </div>
     )
@@ -261,8 +306,9 @@ const helperTts = async (
                 speechToken?.authToken || ``,
                 speechToken?.region || ``
             )
-            speechConfig.speechSynthesisLanguage = 'zh-CN'
-            speechConfig.speechSynthesisVoiceName = 'zh-CN-XiaoxiaoMultilingualNeural'
+            speechConfig.speechSynthesisLanguage = 'wuu-CN' // 'zh-CN'
+            speechConfig.speechSynthesisVoiceName = 'wuu-CN-XiaotongNeural' // 'zh-CN-XiaoxiaoMultilingualNeural'
+
             typeof callback === 'function' && callback(speechConfig)
         } else {
             speechConfig = stateSpeechConfig
@@ -317,12 +363,14 @@ const helperGetAIResponse = async ({
             queryOpenAI: true,
             openAIParams: {
                 baseUrl: 'http://localhost:11434/v1/',
-                model: 'qwen:7b',
+                // model: 'qwen:7b',
+                // model: "llama3",
+                model: 'phi3:3.8b-mini-instruct-4k-fp16',
                 // model: 'hfl/llama-3-chinese-8b-instruct-gguf',
                 // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
                 apiKey: 'lm-studio',
             },
-            maxTokens: 100,
+            maxTokens: 200,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
                 console.log('streamHandler', streamResult)
                 const { data } = streamResult || {}
