@@ -1,11 +1,156 @@
 'use client'
 import _ from 'lodash'
-import React, { useEffect, useMemo, useCallback, useState } from 'react'
+import React, { useEffect, useMemo, useCallback, useRef, useState } from 'react'
 import { useMainStore } from '@/(pages)/main/providers'
 import { fetchTokenOrRefresh, fetchAIGraphqlStream } from '@/shared/Fetches'
 import type { SpeechToken } from '@/shared/interface'
 import { recordingIdleGap } from '@/shared/constants'
 import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
+import { Canvas, useFrame, ThreeElements } from '@react-three/fiber'
+import * as THREE from 'three'
+import { sleep } from '@/shared/tools'
+
+const AudioVisualizer = ({ isMicOn }: { isMicOn: boolean }) => {
+    const [analyzer, setAnalyzer] = useState<any>(null)
+    const [audioContext, setAudioContext] = useState<any>(null)
+    const mount = useRef<HTMLDivElement>(null!)
+    const width = 384,
+        height = 600
+
+    useEffect(() => {
+        const scene = new THREE.Scene()
+        // 创建一个圆形的几何体，这里使用一个扇形来近似圆形
+        const circleGeometry = new THREE.TorusGeometry(0.3, 1, 200, 200) // 半径, 圆环宽度, 细分纬度, 细分经度
+
+        // 创建一个材质
+        const circleMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 })
+        const circle = new THREE.Mesh(circleGeometry, circleMaterial)
+        // 创建一个相机
+        const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+        const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
+        renderer.setSize(width, height)
+        // 抗锯齿设置
+        renderer.setPixelRatio(window.devicePixelRatio)
+        renderer.shadowMap.enabled = true
+
+        mount.current.appendChild(renderer.domElement)
+
+        const geometry = new THREE.SphereGeometry(1, 32, 16)
+        const material = new THREE.MeshBasicMaterial({ color: 'black' })
+
+        const sphere = new THREE.Mesh(geometry, material)
+
+        // scene.add(sphere)
+
+        scene.add(circle)
+
+        camera.position.z = 5
+
+        // Audio context
+        // @ts-ignore
+        const AudioContext = window.AudioContext || window.webkitAudioContext
+        const __audioContext__ = new AudioContext()
+        setAudioContext(__audioContext__)
+        const analyzer = __audioContext__.createAnalyser()
+        setAnalyzer(__audioContext__.createAnalyser())
+
+        const __getUserMedia__ =
+            navigator.mediaDevices?.getUserMedia ||
+            navigator.getUserMedia ||
+            navigator.webkitGetUserMedia ||
+            navigator.mozGetUserMedia
+        if (!__getUserMedia__) {
+            alert(`Your browser does not support getUserMedia.`)
+            console.error('Your browser does not support getUserMedia.')
+            return
+        }
+
+        let lazyScale: any = null
+        let lastData = 0
+
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+            const source = __audioContext__.createMediaStreamSource(stream)
+            source.connect(analyzer)
+        })
+
+        const render = async () => {
+            console.log(`render`)
+            const data = analyzer ? new Uint8Array(analyzer.frequencyBinCount) : []
+            analyzer?.getByteFrequencyData(data as Uint8Array)
+            const scaleNumberX = 0.005,
+                scaleNumberY = 0.005,
+                scaleNumberZ = 0.005
+            // use audio data here to update sphere properties
+
+            let modefiedData = data[0] // parseInt(String(data[0]/10)) * 10
+            let between = modefiedData - lastData
+            console.log(`data[0]`, modefiedData, lastData, between)
+
+            // await sleep(1)
+            if (between > 0) {
+                if (Math.abs(between) > 2) {
+                    for (let i = 0; i < between; ) {
+                        // await sleep(1)
+                        await sleep(0.001)
+                        console.log(`111`)
+                        circle.scale.set(
+                            1 + Math.sin((lastData + i) * scaleNumberX),
+                            1 + Math.sin((lastData + i) * scaleNumberY),
+                            1 + Math.sin((lastData + i) * scaleNumberZ)
+                        )
+                        // renderer.render(scene, camera)
+                        renderer.render(scene, camera)
+                        // requestAnimationFrame(render)
+                        i += 0.5
+                    }
+                }
+            } else {
+                if (Math.abs(between) > 2) {
+                    for (let i = 0; i < Math.abs(between); ) {
+                        await sleep(0.001)
+                        console.log(222)
+                        circle.scale.set(
+                            1 + Math.sin((lastData - i) * scaleNumberX),
+                            1 + Math.sin((lastData - i) * scaleNumberY),
+                            1 + Math.sin((lastData - i) * scaleNumberZ)
+                        )
+                        // renderer.render(scene, camera)
+                        renderer.render(scene, camera)
+                        // requestAnimationFrame(render)
+                        i += 0.3
+                    }
+                }
+            }
+
+            lastData = modefiedData
+
+            // await sleep(0.1)
+            // renderer.render(scene, camera)
+            requestAnimationFrame(render)
+        }
+
+        // render()
+        renderer.render(scene, camera)
+        requestAnimationFrame(render)
+    }, [])
+
+    useEffect(() => {
+        if (isMicOn) {
+            let source: any
+            // Get microphone
+            navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+                const source = audioContext.createMediaStreamSource(stream)
+                source.connect(analyzer)
+            })
+            // Update sphere based on audio data
+        }
+    }, [isMicOn])
+    return (
+        <div>
+            <div ref={mount} />
+        </div>
+    )
+}
 
 export default function SpeechText({}: {}) {
     const { speechToken, isRecording, talkStart, updateTalkStart, updateIsRecording, updateSpeechToken } = useMainStore(
@@ -60,31 +205,33 @@ export default function SpeechText({}: {}) {
                     const { authToken, region } = await helperGetSpeechTokenAsync()
                     if (authToken && region) {
                         updateSpeechToken({ authToken, region })
-                        helperSttFromMic(
-                            stateRecognizer,
-                            { authToken, region },
-                            handleRecording,
-                            (recognizer: Record<string, any>) => {
-                                if (recognizer) {
-                                    setStateRecognizer(recognizer)
+                        talkStart &&
+                            helperSttFromMic(
+                                stateRecognizer,
+                                { authToken, region },
+                                handleRecording,
+                                (recognizer: Record<string, any>) => {
+                                    if (recognizer) {
+                                        setStateRecognizer(recognizer)
+                                    }
                                 }
-                            }
-                        )
+                            )
                     }
                 }
                 // console.log(`speechToken`, speechToken)
                 syncSpeechToken()
             } else {
-                helperSttFromMic(
-                    stateRecognizer,
-                    speechToken || {},
-                    handleRecording,
-                    (recognizer: Record<string, any>) => {
-                        if (recognizer) {
-                            setStateRecognizer(recognizer)
+                talkStart &&
+                    helperSttFromMic(
+                        stateRecognizer,
+                        speechToken || {},
+                        handleRecording,
+                        (recognizer: Record<string, any>) => {
+                            if (recognizer) {
+                                setStateRecognizer(recognizer)
+                            }
                         }
-                    }
-                )
+                    )
             }
         } else if (stateRecognizer) {
             helperPauseMic(stateRecognizer)
@@ -94,8 +241,8 @@ export default function SpeechText({}: {}) {
                 helperGetAIResponse({
                     messages: [{ role: 'user', content: _.map(recordedTextList, 'text').join('\n') }],
                     onStream: async (responseStream: string) => {
-                        const text = _.trim(responseStream)
-                        console.log('onStream', responseStream, text)
+                        const text = _.trim(responseStream).replace(/\*/g, '')
+                        console.log('onStream', text)
 
                         if (text) {
                             streamText += text
@@ -134,6 +281,9 @@ export default function SpeechText({}: {}) {
                         </div>
                     )
                 })}
+                {/* <audio id="audio--view" muted={true} autoPlay={true} playsInline={true}></audio>
+                <video id="camera--view" muted={true} autoPlay={true} playsInline={true}></video> */}
+                <AudioVisualizer isMicOn={isRecording || false} />
             </div>
             <div className="flex functional flex-row justify-between items-center">
                 <div
@@ -227,7 +377,7 @@ const helperTts = async (
                 speechToken?.region || ``
             )
             speechConfig.speechSynthesisLanguage = 'zh-CN'
-            speechConfig.speechSynthesisVoiceName = 'zh-CN-XiaochenMultilingualNeural'
+            speechConfig.speechSynthesisVoiceName = 'zh-CN-XiaoxiaoMultilingualNeural'
             typeof callback === 'function' && callback(speechConfig)
         } else {
             speechConfig = stateSpeechConfig
@@ -282,8 +432,9 @@ const helperGetAIResponse = async ({
             queryOpenAI: true,
             openAIParams: {
                 baseUrl: 'http://localhost:11434/v1/',
-                model: 'qwen:7b',
-                apiKey: 'local request no need apiKey',
+                // model: 'qwen:7b',
+                model: 'hfl/llama-3-chinese-8b-instruct-gguf',
+                apiKey: 'lm-studio',
             },
             maxTokens: 100,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
