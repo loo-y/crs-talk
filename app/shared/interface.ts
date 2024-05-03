@@ -4,7 +4,12 @@ export interface SpeechToken {
 }
 
 export interface IGrahpqlAIFetchProps {
-    prompt: string
+    prompt?: string
+    messages?: {
+        role: string
+        content: string
+    }[]
+    maxTokens?: number
     isStream?: boolean
     queryQwen?: boolean
     qwenParams?: Record<string, any>

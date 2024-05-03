@@ -3,6 +3,7 @@ import type { SpeechToken } from '@/shared/interface'
 
 type MainState = {
     isloading?: boolean
+    talkStart: boolean
     isRecording?: boolean
     isAssistantSpeaking?: boolean
     speechToken?: SpeechToken
@@ -10,6 +11,7 @@ type MainState = {
 
 type MainActions = {
     updateIsLoading: (loading: boolean) => void
+    updateTalkStart: (talkStart: boolean) => void
     updateIsRecording: (recording: boolean) => void
     updateIsAssistantSpeaking: (speaking: boolean) => void
     updateSpeechToken: (token: SpeechToken) => void
@@ -18,15 +20,23 @@ type MainActions = {
 export type MainStore = MainState & MainActions
 
 export const initMainStore = (): MainState => {
-    return { isloading: false }
+    return { isloading: false, talkStart: false }
 }
 
-const defaultInitState: MainState = {}
+const defaultInitState: MainState = {
+    talkStart: false,
+}
 
 export const createMainStore = (initState: MainState = defaultInitState) => {
     return createStore<MainStore>()(set => {
         return {
             ...initState,
+            updateTalkStart: (talkStart: boolean) =>
+                set(state => {
+                    return {
+                        talkStart,
+                    }
+                }),
             updateIsLoading: (loading: boolean) =>
                 set(state => {
                     return {

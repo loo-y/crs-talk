@@ -2,14 +2,15 @@
 import _ from 'lodash'
 import React, { useEffect, useMemo, useCallback, useState } from 'react'
 import { useMainStore } from '@/(pages)/main/providers'
-import { fetchTokenOrRefresh } from '@/shared/Fetches'
+import { fetchTokenOrRefresh, fetchAIGraphqlStream } from '@/shared/Fetches'
 import type { SpeechToken } from '@/shared/interface'
 import { recordingIdleGap } from '@/shared/constants'
 import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
 
-let recordOffset = 0
 export default function SpeechText({}: {}) {
-    const { speechToken, isRecording, updateIsRecording, updateSpeechToken } = useMainStore(state => state)
+    const { speechToken, isRecording, talkStart, updateTalkStart, updateIsRecording, updateSpeechToken } = useMainStore(
+        state => state
+    )
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
     const [stateRecognizer, setStateRecognizer] = useState<Record<string, any>>()
 
@@ -86,8 +87,29 @@ export default function SpeechText({}: {}) {
             }
         } else if (stateRecognizer) {
             helperPauseMic(stateRecognizer)
+            if (talkStart) {
+                // fetch ai response
+                helperGetAIResponse({
+                    messages: [{ role: 'user', content: _.map(recordedTextList, 'text').join('\n') }],
+                    onStream: (responseStream: string) => {
+                        console.log('onStream', responseStream)
+                    },
+                }).then(res => {
+                    // after response completed, continue recording
+                    console.log(res)
+                    updateIsRecording(true)
+                })
+            }
         }
     }, [isRecording])
+
+    useEffect(() => {
+        if (!talkStart) {
+            updateIsRecording(false)
+        } else {
+            updateIsRecording(true)
+        }
+    }, [talkStart])
 
     return (
         <div className="w-96 flex flex-col">
@@ -103,12 +125,19 @@ export default function SpeechText({}: {}) {
             <div className="flex functional flex-row justify-between items-center">
                 <div
                     className="flex pause w-5 h-5 bg-slate-800 cursor-pointer rounded-full"
-                    onClick={() => updateIsRecording(true)}
+                    // onClick={() => updateIsRecording(true)}
                 ></div>
-                <div
-                    className="flex stop w-5 h-5 bg-red-800 cursor-pointer rounded-full"
-                    onClick={() => updateIsRecording(false)}
-                ></div>
+                {talkStart ? (
+                    <div
+                        className="flex stop w-5 h-5 bg-red-800 cursor-pointer rounded-full"
+                        onClick={() => updateTalkStart(false)}
+                    ></div>
+                ) : (
+                    <div
+                        className="flex stop w-5 h-5 bg-green-800 cursor-pointer rounded-full"
+                        onClick={() => updateTalkStart(true)}
+                    ></div>
+                )}
             </div>
         </div>
     )
@@ -164,4 +193,46 @@ const helperSttFromMic = async (
 
 const helperPauseMic = async (recognizer: Record<string, any>) => {
     recognizer.stopContinuousRecognitionAsync()
+}
+
+const helperGetAIResponse = async ({
+    messages,
+    onStream,
+}: {
+    messages: { role: string; content: string }[]
+    onStream?: (arg: any) => void
+}) => {
+    return new Promise((resolve, reject) =>
+        fetchAIGraphqlStream({
+            messages,
+            isStream: true,
+            queryOpenAI: true,
+            openAIParams: {
+                baseUrl: 'http://localhost:11434/v1/',
+                model: 'qwen:7b',
+                apiKey: 'local request no need apiKey',
+            },
+            streamHandler: (streamResult: { data: string; status?: boolean }) => {
+                console.log('streamHandler', streamResult)
+                const { data } = streamResult || {}
+                try {
+                    const { hasNext, incremental } = (typeof data == `object` ? data : JSON.parse(data)) || {}
+                    if (incremental) {
+                        _.map(incremental || [], (_incremental: { items: string[]; path: (string | Number)[] }) => {
+                            const { items, path } = _incremental || {}
+                            const [chat, aiType, index] = path as [string, String, Number]
+                            console.log(`items`, items)
+                            typeof onStream == `function` && onStream(items?.[0] || ``)
+                        })
+                    }
+                } catch (err) {
+                    console.log(`err`, err)
+                    reject(err)
+                }
+            },
+            completeHandler: value => {
+                resolve(true)
+            },
+        })
+    )
 }

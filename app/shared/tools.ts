@@ -3,6 +3,8 @@ export const sleep = (sec: number) => new Promise(resolve => setTimeout(resolve,
 
 export const getGraphqlAIMashupBody = ({
     prompt,
+    messages,
+    maxTokens,
     name,
     isStream,
     queryQwen,
@@ -27,13 +29,15 @@ export const getGraphqlAIMashupBody = ({
         queryList = [],
         variables: Record<string, any> = {
             params: {
-                messages: [
-                    {
-                        role: 'user',
-                        content: prompt,
-                    },
-                ],
-                maxTokens: 2048,
+                messages: messages
+                    ? messages
+                    : [
+                          {
+                              role: 'user',
+                              content: prompt,
+                          },
+                      ],
+                maxTokens: maxTokens || 2048,
             },
         }
     if (queryQwen) {
@@ -100,11 +104,11 @@ export const getGraphqlAIMashupBody = ({
         let paramsOpenAI = '',
             hasOpenAIArgs = openAIParams
         if (hasOpenAIArgs) {
-            paramsList.push(`$openAIParams: OpenAIArgs`)
+            paramsList.push(`$openAIParams: OpenaiArgs`)
             paramsOpenAI = '(params: $openAIParams)'
             variables.openAIParams = openAIParams
         }
-        queryList.push(isStream ? `OpenAIStream${paramsOpenAI}@stream` : `OpenAI ${paramsOpenAI} {text}`)
+        queryList.push(isStream ? `OpenaiStream${paramsOpenAI}@stream` : `Openai ${paramsOpenAI} {text}`)
     }
     if (queryLingyiwanwu) {
         let paramsLingyiwanwu = '',
