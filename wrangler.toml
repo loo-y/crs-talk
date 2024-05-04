@@ -1,0 +1,3 @@
+compatibility_date = "2022-11-30"
+name = "crs-talk"
+compatibility_flags = ["nodejs_compat"]

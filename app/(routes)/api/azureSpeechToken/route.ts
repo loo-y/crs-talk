@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import * as dotenv from 'dotenv'
 dotenv.config()
 
+export const runtime = 'edge'
 const { AZURE_SPEECH_KEY: azureSpeechKey = '', AZURE_SPEECH_REGION: azureSpeechregion = '' } = process.env || {}
 
 // const speechConfig = MicrosoftSpeechSdk.SpeechConfig.fromSubscription(azureSpeechKey, azureSpeechregion);
