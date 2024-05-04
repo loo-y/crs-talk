@@ -30,6 +30,7 @@ export default function SpeechText({}: {}) {
     const handleRecording = (speechRecognitionResult: Record<string, any>) => {
         console.log('SpeechRecognitionResult', speechRecognitionResult)
         const { privText, privOffset, text, offset } = speechRecognitionResult || {}
+        const isEmptyText = _.trim(privText || text)?.length <= 0
         if (privText || text) {
             setRecordedTextList(recordedTextList => {
                 const indexCurrent = _.findIndex(recordedTextList, { offset: privOffset || offset })
@@ -42,7 +43,7 @@ export default function SpeechText({}: {}) {
             })
         }
 
-        clearTimeout(recordingIdleTimer)
+        !isEmptyText && clearTimeout(recordingIdleTimer)
         recordingIdleTimer = setTimeout(() => {
             updateIsRecording(false)
         }, recordingIdleGap)
@@ -187,11 +188,7 @@ export default function SpeechText({}: {}) {
             </div>
             <div className="flex functional flex-row justify-between items-center">
                 <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
-                    <div
-                        className="flex pause w-5 h-5 bg-slate-800 cursor-pointer rounded-full"
-                        // onClick={() => updateIsRecording(true)}
-                    ></div>
-                    <div className=""></div>
+                    <div className="">{talkStart ? (isRecording ? 'Recording' : 'Please Wait') : ''}</div>
                 </div>
                 <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
                     {talkStart ? (
