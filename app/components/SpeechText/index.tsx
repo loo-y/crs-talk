@@ -9,6 +9,8 @@ import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
 import AudioVisualizer from '../AudioVisualizer'
 import TextVisualizer from '../TextVisualizer'
 
+const textAudioPlayQueue: string[] = []
+let streamInQueuePlaying = false
 export default function SpeechText({}: {}) {
     const { speechToken, isRecording, talkStart, updateTalkStart, updateIsRecording, updateSpeechToken } = useMainStore(
         state => state
@@ -65,6 +67,33 @@ export default function SpeechText({}: {}) {
         }
     }, [])
 
+    const handlePlayAudio = async (text: string) => {
+        textAudioPlayQueue.push(text)
+
+        if (streamInQueuePlaying) {
+            return
+        }
+
+        // setStreamInQueuePlaying(true)
+        streamInQueuePlaying = true
+        while (textAudioPlayQueue.length) {
+            const textPlay = textAudioPlayQueue.shift()
+            if (textPlay == `__{{streamCompleted}}__`) {
+                // setStreamInQueuePlaying(false)
+                streamInQueuePlaying = false
+                talkStart && updateIsRecording(true)
+                break
+            }
+            if (textPlay) {
+                await helperTts(textPlay, stateTTSSpeechConfig, speechToken, speechConfig => {
+                    setStateTTSSpeechConfig(speechConfig)
+                })
+            }
+        }
+        // setStreamInQueuePlaying(false)
+        streamInQueuePlaying = false
+    }
+
     useEffect(() => {
         if (isRecording) {
             if (!speechToken) {
@@ -116,32 +145,42 @@ export default function SpeechText({}: {}) {
                     messages: newMessageList,
                     onStream: async (responseStream: string) => {
                         const text = _.trim(responseStream).replace(/\*/g, '')
-                        console.log('onStream', text)
+                        // console.log('onStream', text)
 
                         if (text) {
-                            streamText += text
-                            // await helperTts(responseStream, stateSynthesizer, speechToken, (synthesizer)=>{
-                            //     setStateSynthesizer(synthesizer)
-                            // })
-                            setTalkMessageList(talkMessageList => {
-                                if (talkMessageList?.at(-1)?.role === 'assistant') {
-                                    const newList = [...talkMessageList]
-                                    newList!.at(-1)!.content = streamText
-                                    return newList
+                            if (text == `__{{streamCompleted}}__`) {
+                                if (streamText) {
+                                    handlePlayAudio(streamText)
+                                    handlePlayAudio(text)
                                 } else {
-                                    return [...talkMessageList, { role: 'assistant', content: streamText }]
+                                    handlePlayAudio(text)
                                 }
-                            })
+                            } else {
+                                streamText += text
+                                if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
+                                    handlePlayAudio(streamText)
+                                    streamText = ''
+                                }
+                                setTalkMessageList(talkMessageList => {
+                                    if (talkMessageList?.at(-1)?.role === 'assistant') {
+                                        const newList = [...talkMessageList]
+                                        newList!.at(-1)!.content += text
+                                        return newList
+                                    } else {
+                                        return [...talkMessageList, { role: 'assistant', content: text }]
+                                    }
+                                })
+                            }
                         }
                     },
                 }).then(async res => {
                     // after response completed, continue recording
                     console.log(res)
-                    await helperTts(streamText, stateTTSSpeechConfig, speechToken, speechConfig => {
-                        setStateTTSSpeechConfig(speechConfig)
-                    })
+                    // await helperTts(streamText, stateTTSSpeechConfig, speechToken, speechConfig => {
+                    //     setStateTTSSpeechConfig(speechConfig)
+                    // })
                     // setTalkMessageList(talkMessageList => [...talkMessageList, {role: "assistant", content: streamText}])
-                    talkStart && updateIsRecording(true)
+                    // talkStart && updateIsRecording(true)
                 })
             }
         }
@@ -378,7 +417,7 @@ const helperGetAIResponse = async ({
                         _.map(incremental || [], (_incremental: { items: string[]; path: (string | Number)[] }) => {
                             const { items, path } = _incremental || {}
                             const [chat, aiType, index] = path as [string, String, Number]
-                            console.log(`items`, items)
+                            // console.log(`items`, items)
                             typeof onStream == `function` && onStream(items?.[0] || ``)
                         })
                     }
@@ -388,6 +427,7 @@ const helperGetAIResponse = async ({
                 }
             },
             completeHandler: value => {
+                typeof onStream == `function` && onStream(`__{{streamCompleted}}__`)
                 resolve(true)
             },
         })

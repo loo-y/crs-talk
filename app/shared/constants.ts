@@ -1,1 +1,1 @@
-export const recordingIdleGap = 4000 // 4s irecording recording to idle gap
+export const recordingIdleGap = 2500 // 2.5s irecording recording to idle gap
