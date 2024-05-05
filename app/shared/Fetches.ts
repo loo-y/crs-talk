@@ -13,14 +13,14 @@ const commonOptions = {
     },
 }
 
-export const fetchTokenOrRefresh = async () => {
+export const fetchTokenOrRefresh = async (isOpenAI?: boolean) => {
     const cookie = new Cookie()
-    const speechTokenCookieName = 'speech-token'
+    const speechTokenCookieName = isOpenAI ? 'openai-speech-token' : 'speech-token'
     const speechToken = cookie.get(speechTokenCookieName)
 
     if (speechToken === undefined) {
         try {
-            const response = await fetch('/api/azureSpeechToken', {
+            const response = await fetch(isOpenAI ? '/api/azureOpenAISpeechToken' : '/api/azureSpeechToken', {
                 ...commonOptions,
                 method: 'GET',
             })
@@ -33,7 +33,7 @@ export const fetchTokenOrRefresh = async () => {
             return { status: false, authToken: null, errorInfo: err }
         }
     } else {
-        console.log('Token fetched from cookie: ' + speechToken)
+        console.log(`Token fetched from cookie ${isOpenAI ? 'openai-speech-token' : 'speech-token'}: ` + speechToken)
         const idx = speechToken.indexOf(':')
         return { status: true, authToken: speechToken.slice(idx + 1), region: speechToken.slice(0, idx) }
     }

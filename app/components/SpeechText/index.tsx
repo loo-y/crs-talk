@@ -21,12 +21,13 @@ export default function SpeechText({}: {}) {
         {
             role: 'system',
             content:
-                '你现在是我的朋友，我们正在饭后聊天，请用尽量简短和轻松的语气和我对话，并且请不要在对话中让人发现你是AI',
+                '你现在是我的朋友，我们正在饭后聊天，请用尽量简短和轻松的语气和我对话，并且请不要在对话中让人发现你是AI，不要出现emoji',
         },
     ])
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
     const [stateRecognizer, setStateRecognizer] = useState<Record<string, any>>()
     const [stateTTSSpeechConfig, setStateTTSSpeechConfig] = useState<Record<string, any>>()
+    const [speechTokenOpenAI, setSpeechTokenOpenAI] = useState<SpeechToken>()
 
     let recordingIdleTimer: any = null
     const handleRecording = (speechRecognitionResult: Record<string, any>) => {
@@ -62,7 +63,20 @@ export default function SpeechText({}: {}) {
                     })
                 }
             }
-            console.log(`speechToken`, speechToken)
+            syncSpeechToken()
+        }
+
+        // speechTokenOpenAI
+        if (!speechTokenOpenAI) {
+            const syncSpeechToken = async () => {
+                const { authToken, region } = await helperGetSpeechTokenAsync(true)
+                if (authToken && region) {
+                    setSpeechTokenOpenAI({
+                        authToken,
+                        region,
+                    })
+                }
+            }
             syncSpeechToken()
         }
     }, [])
@@ -85,9 +99,15 @@ export default function SpeechText({}: {}) {
                 break
             }
             if (textPlay) {
-                await helperTts(textPlay, stateTTSSpeechConfig, speechToken, speechConfig => {
-                    setStateTTSSpeechConfig(speechConfig)
-                })
+                console.log(`speechTokenOpenAI?.authToken`, speechTokenOpenAI?.authToken)
+                await helperTts(
+                    textPlay,
+                    stateTTSSpeechConfig,
+                    speechTokenOpenAI?.authToken ? speechTokenOpenAI : speechToken,
+                    speechConfig => {
+                        setStateTTSSpeechConfig(speechConfig)
+                    }
+                )
             }
         }
         // setStreamInQueuePlaying(false)
@@ -157,10 +177,10 @@ export default function SpeechText({}: {}) {
                                 }
                             } else {
                                 streamText += text
-                                if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
-                                    handlePlayAudio(streamText)
-                                    streamText = ''
-                                }
+                                // if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
+                                //     handlePlayAudio(streamText)
+                                //     streamText = ''
+                                // }
                                 setTalkMessageList(talkMessageList => {
                                     if (talkMessageList?.at(-1)?.role === 'assistant') {
                                         const newList = [...talkMessageList]
@@ -272,8 +292,8 @@ export default function SpeechText({}: {}) {
     )
 }
 
-const helperGetSpeechTokenAsync = async (): Promise<{ authToken?: string; region?: string }> => {
-    const response = await fetchTokenOrRefresh()
+const helperGetSpeechTokenAsync = async (isOpenAI?: boolean): Promise<{ authToken?: string; region?: string }> => {
+    const response = await fetchTokenOrRefresh(isOpenAI)
     const { status, authToken, region } = response || {}
     if (status) {
         return {
@@ -333,7 +353,7 @@ const helperTts = async (
     if (!speechToken?.authToken || !speechToken?.region) {
         return
     }
-
+    console.log(`speechToken.region`, speechToken.region)
     return new Promise((resolve, reject) => {
         let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
         let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined
@@ -342,8 +362,8 @@ const helperTts = async (
                 speechToken?.authToken || ``,
                 speechToken?.region || ``
             )
-            speechConfig.speechSynthesisLanguage = 'zh-CN' // 'wuu-CN' //
-            speechConfig.speechSynthesisVoiceName = 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
+            // speechConfig.speechSynthesisLanguage = 'zh-CN' // 'wuu-CN' //
+            speechConfig.speechSynthesisVoiceName = `zh-CN-XiaoxiaoMultilingualNeural` // `en-US-OnyxMultilingualNeural` // 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
 
             typeof callback === 'function' && callback(speechConfig)
         } else {
@@ -366,9 +386,9 @@ const helperTts = async (
                 inputText,
                 function (result) {
                     if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
-                        console.log('Speech synthesized for text: ' + inputText)
+                        console.log('TTS Speech synthesized for text: ' + inputText)
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
-                        console.log('Error: ' + result.errorDetails)
+                        console.log('TTS Error: ' + result.errorDetails)
                     }
                     window.console.log(result)
                     synthesizer?.close()
