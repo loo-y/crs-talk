@@ -387,11 +387,13 @@ const helperTts = async (
         audio.onAudioEnd = () => {
             clearTimeout(lazyResolve)
             console.log(`onAudioEnd`)
+            synthesizer?.close()
+            synthesizer = undefined
             resolve(true)
         }
         audio.onAudioStart = () => {
             console.log(`onAudioStart`)
-            alert(`onAudioStart`)
+            // alert(`onAudioStart`)
         }
 
         if (speechConfig) {
@@ -407,10 +409,12 @@ const helperTts = async (
                         console.log('TTS Error: ' + result.errorDetails)
                     }
                     console.log(`tts result====>`, result)
-                    synthesizer?.close()
-                    synthesizer = undefined
+
                     lazyResolve = setTimeout(() => {
                         alert(`error, timeout, ${audio.isClosed}`)
+                        audio.close()
+                        synthesizer?.close()
+                        synthesizer = undefined
                         resolve(true)
                     }, 5000)
                 },
