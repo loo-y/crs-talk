@@ -367,7 +367,7 @@ const helperTts = async (
     }
     console.log(`speechToken.region`, speechToken, speechToken.region)
     return new Promise((resolve, reject) => {
-        let lazyResolve: any
+        // let lazyResolve: any
         let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
         let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined
         if (!stateSpeechConfig) {
@@ -384,8 +384,9 @@ const helperTts = async (
         }
 
         const audio = new SpeechSDK.SpeakerAudioDestination()
+        audio.format = SpeechSDK.AudioStreamFormat.getWaveFormat(16000, 1, 16, SpeechSDK.AudioFormatTag.MP3)
         audio.onAudioEnd = () => {
-            clearTimeout(lazyResolve)
+            // clearTimeout(lazyResolve)
             console.log(`onAudioEnd`)
             synthesizer?.close()
             synthesizer = undefined
@@ -409,14 +410,16 @@ const helperTts = async (
                         console.log('TTS Error: ' + result.errorDetails)
                     }
                     console.log(`tts result====>`, result)
+                    synthesizer?.close()
+                    synthesizer = undefined
 
-                    lazyResolve = setTimeout(() => {
-                        alert(`error, timeout, ${audio.isClosed}`)
-                        audio.close()
-                        synthesizer?.close()
-                        synthesizer = undefined
-                        resolve(true)
-                    }, 5000)
+                    // lazyResolve = setTimeout(() => {
+                    //     alert(`error, timeout, ${audio.isClosed}`)
+                    //     audio.close()
+                    //     synthesizer?.close()
+                    //     synthesizer = undefined
+                    //     resolve(true)
+                    // }, 5000)
                 },
                 function (err) {
                     alert(`error, reject`)
