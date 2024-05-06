@@ -391,6 +391,7 @@ const helperTts = async (
         }
         audio.onAudioStart = () => {
             console.log(`onAudioStart`)
+            alert(`onAudioStart`)
         }
 
         if (speechConfig) {
@@ -409,7 +410,7 @@ const helperTts = async (
                     synthesizer?.close()
                     synthesizer = undefined
                     lazyResolve = setTimeout(() => {
-                        alert('error, timeout')
+                        alert(`error, timeout, ${audio.isClosed}`)
                         resolve(true)
                     }, 5000)
                 },
