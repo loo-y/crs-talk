@@ -362,6 +362,7 @@ const helperTts = async (
     callback?: (synthesizer: any) => void
 ) => {
     if (!speechToken?.authToken || !speechToken?.region) {
+        alert(`no speechToken`)
         return
     }
     console.log(`speechToken.region`, speechToken, speechToken.region)
@@ -399,6 +400,7 @@ const helperTts = async (
                     if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
                         console.log('TTS Speech synthesized for text: ' + inputText)
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
+                        alert(`error, cancel`)
                         console.log('TTS Error: ' + result.errorDetails)
                     }
                     window.console.log(result)
@@ -406,6 +408,7 @@ const helperTts = async (
                     synthesizer = undefined
                 },
                 function (err) {
+                    alert(`error, reject`)
                     console.log(`reject`, err)
                     synthesizer?.close()
                     synthesizer = undefined
