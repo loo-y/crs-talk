@@ -437,8 +437,8 @@ const helperGetAIResponse = async ({
             //     // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
             //     apiKey: 'lm-studio',
             // },
-            // queryMoonshot: true,
-            queryGroq: true,
+            queryMoonshot: true,
+            // queryGroq: true,
             maxTokens: 200,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
                 console.log('streamHandler', streamResult)
