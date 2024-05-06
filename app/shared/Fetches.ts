@@ -18,7 +18,7 @@ export const fetchTokenOrRefresh = async (isOpenAI?: boolean) => {
     const speechTokenCookieName = isOpenAI ? 'openai-speech-token' : 'speech-token'
     const speechToken = cookie.get(speechTokenCookieName)
 
-    if (speechToken === undefined) {
+    if (true || speechToken === undefined) {
         try {
             const response = await fetch(isOpenAI ? '/api/azureOpenAISpeechToken' : '/api/azureSpeechToken', {
                 ...commonOptions,
