@@ -403,7 +403,7 @@ const helperTts = async (
                         alert(`error, cancel`)
                         console.log('TTS Error: ' + result.errorDetails)
                     }
-                    window.console.log(result)
+                    console.log(`tts result====>`, result)
                     synthesizer?.close()
                     synthesizer = undefined
                 },
@@ -412,7 +412,7 @@ const helperTts = async (
                     console.log(`reject`, err)
                     synthesizer?.close()
                     synthesizer = undefined
-                    reject(err)
+                    resolve(false)
                 }
             )
         }
