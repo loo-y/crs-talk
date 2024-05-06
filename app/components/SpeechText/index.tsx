@@ -28,6 +28,7 @@ export default function SpeechText({}: {}) {
     const [stateRecognizer, setStateRecognizer] = useState<Record<string, any>>()
     const [stateTTSSpeechConfig, setStateTTSSpeechConfig] = useState<Record<string, any>>()
     const [speechTokenOpenAI, setSpeechTokenOpenAI] = useState<SpeechToken>()
+    const talkMessageListRef = useRef<HTMLDivElement>(null)
 
     let recordingIdleTimer: any = null
     const handleRecording = (speechRecognitionResult: Record<string, any>) => {
@@ -81,6 +82,13 @@ export default function SpeechText({}: {}) {
         }
     }, [])
 
+    useEffect(() => {
+        const talkMessageListDiv = talkMessageListRef.current as HTMLDivElement
+        if (talkMessageListDiv) {
+            talkMessageListDiv.scrollTo(0, talkMessageListDiv.scrollHeight)
+        }
+    }, [talkMessageList])
+
     const handlePlayAudio = async (text: string) => {
         textAudioPlayQueue.push(text)
 
@@ -99,7 +107,7 @@ export default function SpeechText({}: {}) {
                 break
             }
             if (textPlay) {
-                console.log(`speechTokenOpenAI?.authToken`, speechTokenOpenAI?.authToken)
+                // console.log(`speechTokenOpenAI?.authToken`, speechTokenOpenAI, speechToken, speechTokenOpenAI?.authToken ? speechTokenOpenAI : speechToken)
                 await helperTts(
                     textPlay,
                     stateTTSSpeechConfig,
@@ -171,10 +179,10 @@ export default function SpeechText({}: {}) {
                             if (text == `__{{streamCompleted}}__`) {
                                 if (streamText) {
                                     handlePlayAudio(streamText)
-                                    handlePlayAudio(text)
-                                } else {
-                                    handlePlayAudio(text)
                                 }
+
+                                // 用于通知结束
+                                handlePlayAudio(text)
                             } else {
                                 streamText += text
                                 // if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
@@ -269,7 +277,10 @@ export default function SpeechText({}: {}) {
                     )}
                 </div>
             </div>
-            <div className="flex flex-col overflow-x-hidden overflow-y-scroll max-h-52 h-fit px-2 gap-2">
+            <div
+                className="flex flex-col overflow-x-hidden overflow-y-scroll max-h-52 h-fit px-2 gap-2"
+                ref={talkMessageListRef}
+            >
                 {_.map(talkMessageList, (talkItem, talkIndex) => {
                     if (talkItem.role == `system`) {
                         return null
@@ -353,7 +364,7 @@ const helperTts = async (
     if (!speechToken?.authToken || !speechToken?.region) {
         return
     }
-    console.log(`speechToken.region`, speechToken.region)
+    console.log(`speechToken.region`, speechToken, speechToken.region)
     return new Promise((resolve, reject) => {
         let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
         let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined

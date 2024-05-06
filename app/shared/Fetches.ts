@@ -26,9 +26,14 @@ export const fetchTokenOrRefresh = async (isOpenAI?: boolean) => {
             })
             const result = await response.json()
             const { token, region } = result || {}
-            cookie.set(speechTokenCookieName, region + ':' + token, { maxAge: 540, path: '/' })
-            console.log('Token fetched from back-end: ' + token)
-            return { status: true, authToken: token, region: region }
+            if (token && region) {
+                cookie.set(speechTokenCookieName, region + ':' + token, { maxAge: 540, path: '/' })
+                console.log('Token fetched from back-end: ' + token)
+                return { status: true, authToken: token, region: region }
+            } else {
+                console.log('Token fetched from back-end failed')
+                return { status: false, authToken: null, region: null }
+            }
         } catch (err) {
             return { status: false, authToken: null, errorInfo: err }
         }
