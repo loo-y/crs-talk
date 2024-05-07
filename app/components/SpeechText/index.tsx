@@ -359,6 +359,7 @@ const helperSttFromMic = async (
     callback?: (arg?: any) => void
 ) => {
     if (!speechToken?.authToken || !speechToken?.region) {
+        alert(`Please get speech token first`)
         return
     }
 
@@ -450,13 +451,13 @@ const helperTts = async (
                     synthesizer?.close()
                     synthesizer = undefined
 
-                    lazyResolve = setTimeout(() => {
-                        alert(`error, timeout, ${audio.isClosed}`)
-                        audio.close()
-                        synthesizer?.close()
-                        synthesizer = undefined
-                        resolve(true)
-                    }, 15 * 1000)
+                    // lazyResolve = setTimeout(() => {
+                    //     alert(`error, timeout, ${audio.isClosed}`)
+                    //     audio.close()
+                    //     synthesizer?.close()
+                    //     synthesizer = undefined
+                    //     resolve(true)
+                    // }, 15 * 1000)
                 },
                 function (err) {
                     // alert(`error, reject`)

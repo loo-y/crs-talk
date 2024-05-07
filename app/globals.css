@@ -32,6 +32,11 @@ body {
   overscroll-behavior-y: contain;
 }
 
+body *:focus,
+body *:hover {
+  outline: none;
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
