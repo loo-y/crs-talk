@@ -307,8 +307,8 @@ export default function SpeechText({}: {}) {
                             <div className="">Start</div>
                             <div
                                 className="flex stop w-5 h-5 bg-green-800 cursor-pointer rounded-full"
-                                // onClick={() => updateTalkStart(true)}
-                                onClick={() => handleTestTTS()}
+                                onClick={() => updateTalkStart(true)}
+                                // onClick={() => handleTestTTS()}
                             ></div>
                         </>
                     )}
@@ -404,7 +404,7 @@ const helperTts = async (
     }
     console.log(`speechToken.region`, speechToken, speechToken.region)
     return new Promise((resolve, reject) => {
-        // let lazyResolve: any
+        let lazyResolve: any
         let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
         let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined
         if (!stateSpeechConfig) {
@@ -423,7 +423,7 @@ const helperTts = async (
         const audio = new SpeechSDK.SpeakerAudioDestination()
         audio.format = SpeechSDK.AudioStreamFormat.getWaveFormat(16000, 1, 16, SpeechSDK.AudioFormatTag.MP3)
         audio.onAudioEnd = () => {
-            // clearTimeout(lazyResolve)
+            clearTimeout(lazyResolve)
             console.log(`onAudioEnd`)
             synthesizer?.close()
             synthesizer = undefined
@@ -443,23 +443,23 @@ const helperTts = async (
                     if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
                         console.log('TTS Speech synthesized for text: ' + inputText)
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
-                        alert(`error, cancel, ${result.errorDetails}`)
+                        // alert(`error, cancel, ${result.errorDetails}`)
                         console.log('TTS Error: ' + result.errorDetails)
                     }
                     console.log(`tts result====>`, result)
                     synthesizer?.close()
                     synthesizer = undefined
 
-                    // lazyResolve = setTimeout(() => {
-                    //     alert(`error, timeout, ${audio.isClosed}`)
-                    //     audio.close()
-                    //     synthesizer?.close()
-                    //     synthesizer = undefined
-                    //     resolve(true)
-                    // }, 5000)
+                    lazyResolve = setTimeout(() => {
+                        alert(`error, timeout, ${audio.isClosed}`)
+                        audio.close()
+                        synthesizer?.close()
+                        synthesizer = undefined
+                        resolve(true)
+                    }, 15 * 1000)
                 },
                 function (err) {
-                    alert(`error, reject`)
+                    // alert(`error, reject`)
                     console.log(`reject`, err)
                     synthesizer?.close()
                     synthesizer = undefined
