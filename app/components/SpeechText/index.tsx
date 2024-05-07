@@ -240,6 +240,42 @@ export default function SpeechText({}: {}) {
         // }
     }, [recordedTextList, isRecording])
 
+    const handleTestTTS = () => {
+        let streamText = ''
+        helperGetAIResponse({
+            messages: [...talkMessageList, { role: 'user', content: `你好呀` }],
+            onStream: async (responseStream: string) => {
+                const text = _.trim(responseStream).replace(/\*/g, '')
+                // console.log('onStream', text)
+
+                if (text) {
+                    if (text == `__{{streamCompleted}}__`) {
+                        if (streamText) {
+                            handlePlayAudio(streamText)
+                        }
+
+                        // 用于通知结束
+                        handlePlayAudio(text)
+                    } else {
+                        streamText += text
+                        // if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
+                        //     handlePlayAudio(streamText)
+                        //     streamText = ''
+                        // }
+                        setTalkMessageList(talkMessageList => {
+                            if (talkMessageList?.at(-1)?.role === 'assistant') {
+                                const newList = [...talkMessageList]
+                                newList!.at(-1)!.content += text
+                                return newList
+                            } else {
+                                return [...talkMessageList, { role: 'assistant', content: text }]
+                            }
+                        })
+                    }
+                }
+            },
+        })
+    }
     return (
         <div className=" w-[20rem] flex flex-col gap-2">
             <div className="flex talkCircle flex-col gap-2">
@@ -271,7 +307,8 @@ export default function SpeechText({}: {}) {
                             <div className="">Start</div>
                             <div
                                 className="flex stop w-5 h-5 bg-green-800 cursor-pointer rounded-full"
-                                onClick={() => updateTalkStart(true)}
+                                // onClick={() => updateTalkStart(true)}
+                                onClick={() => handleTestTTS()}
                             ></div>
                         </>
                     )}
@@ -406,7 +443,7 @@ const helperTts = async (
                     if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
                         console.log('TTS Speech synthesized for text: ' + inputText)
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
-                        alert(`error, cancel`)
+                        alert(`error, cancel, ${result.errorDetails}`)
                         console.log('TTS Error: ' + result.errorDetails)
                     }
                     console.log(`tts result====>`, result)
@@ -444,17 +481,18 @@ const helperGetAIResponse = async ({
         fetchAIGraphqlStream({
             messages,
             isStream: true,
-            // queryOpenAI: true,
-            // openAIParams: {
-            //     baseUrl: 'http://localhost:11434/v1/',
-            //     // model: 'qwen:7b',
-            //     // model: "llama3",
-            //     model: 'phi3:3.8b-mini-instruct-4k-fp16',
-            //     // model: 'hfl/llama-3-chinese-8b-instruct-gguf',
-            //     // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
-            //     apiKey: 'lm-studio',
-            // },
-            queryMoonshot: true,
+            queryOpenAI: true,
+            openAIParams: {
+                baseUrl: 'https://api.deepseek.com/v1/',
+                model: 'deepseek-chat',
+                // model: 'qwen:7b',
+                // model: "llama3",
+                // model: 'phi3:3.8b-mini-instruct-4k-fp16',
+                // model: 'hfl/llama-3-chinese-8b-instruct-gguf',
+                // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
+                // apiKey: 'lm-studio',
+            },
+            // queryMoonshot: true,
             // queryGroq: true,
             maxTokens: 200,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
