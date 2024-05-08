@@ -15,7 +15,7 @@ const AudioVisualizer = ({ isMicOn }: { isMicOn: boolean }) => {
     // let audioContext: any = null
     const mount = useRef<HTMLDivElement>(null!)
     const width = 320,
-        height = 500
+        height = 380
 
     // useEffect(()=>{
     //     // Audio context

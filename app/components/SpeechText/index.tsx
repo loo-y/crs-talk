@@ -315,7 +315,7 @@ export default function SpeechText({}: {}) {
                 </div>
             </div>
             <div
-                className="flex flex-col overflow-x-hidden overflow-y-scroll max-h-52 h-fit px-2 gap-2"
+                className="flex flex-col overflow-x-hidden overflow-y-scroll max-h-[12rem] h-fit px-2 gap-2"
                 ref={talkMessageListRef}
             >
                 {_.map(talkMessageList, (talkItem, talkIndex) => {
@@ -403,7 +403,7 @@ const helperTts = async (
         alert(`no speechToken`)
         return
     }
-    alert(`speechToken.region: ${speechToken.region}`)
+    // alert(`speechToken.region: ${speechToken.region}`)
     console.log(`speechToken.region`, speechToken, speechToken.region)
     return new Promise((resolve, reject) => {
         let lazyResolve: any
@@ -447,6 +447,7 @@ const helperTts = async (
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
                         alert(`error, cancel, ${result.errorDetails}`)
                         console.log('TTS Error: ' + result.errorDetails)
+                        resolve(false)
                     }
                     console.log(`tts result====>`, result)
                     synthesizer?.close()
