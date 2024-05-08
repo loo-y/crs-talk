@@ -403,6 +403,7 @@ const helperTts = async (
         alert(`no speechToken`)
         return
     }
+    alert(`speechToken.region: ${speechToken.region}`)
     console.log(`speechToken.region`, speechToken, speechToken.region)
     return new Promise((resolve, reject) => {
         let lazyResolve: any
@@ -444,7 +445,7 @@ const helperTts = async (
                     if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
                         console.log('TTS Speech synthesized for text: ' + inputText)
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
-                        // alert(`error, cancel, ${result.errorDetails}`)
+                        alert(`error, cancel, ${result.errorDetails}`)
                         console.log('TTS Error: ' + result.errorDetails)
                     }
                     console.log(`tts result====>`, result)
@@ -460,7 +461,7 @@ const helperTts = async (
                     // }, 15 * 1000)
                 },
                 function (err) {
-                    // alert(`error, reject`)
+                    alert(`error, reject`)
                     console.log(`reject`, err)
                     synthesizer?.close()
                     synthesizer = undefined
