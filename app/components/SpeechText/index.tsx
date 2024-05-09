@@ -437,13 +437,15 @@ const helperTts = async (
         }
 
         if (speechConfig) {
-            const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
+            // const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(audio)
+            const audioConfig = SpeechSDK.AudioConfig.fromDefaultSpeakerOutput()
             synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
             synthesizer?.speakTextAsync(
                 inputText,
                 function (result) {
                     if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
                         console.log('TTS Speech synthesized for text: ' + inputText)
+                        resolve(true)
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
                         alert(`error, cancel, ${result.errorDetails}`)
                         console.log('TTS Error: ' + result.errorDetails)
