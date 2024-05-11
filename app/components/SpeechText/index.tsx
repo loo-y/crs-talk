@@ -411,119 +411,127 @@ const helperTts = async (
     // alert(`speechToken.region: ${speechToken.region}`)
     console.log(`speechToken.region`, speechToken, speechToken.region)
     return new Promise((resolve, reject) => {
-        let lazyResolve: any
-        let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
-        let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined
-        if (!stateSpeechConfig) {
-            speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
-                speechToken?.authToken || ``,
-                speechToken?.region || ``
-            )
-            // speechConfig.speechSynthesisLanguage = 'zh-CN' // 'wuu-CN' //
-            speechConfig.speechSynthesisVoiceName = `zh-CN-XiaoxiaoMultilingualNeural` // `en-US-OnyxMultilingualNeural` // 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
+        navigator.mediaDevices
+            .getUserMedia({ audio: true, video: false })
+            .then(() => {
+                let lazyResolve: any
+                let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
+                let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined
+                if (!stateSpeechConfig) {
+                    speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
+                        speechToken?.authToken || ``,
+                        speechToken?.region || ``
+                    )
+                    // speechConfig.speechSynthesisLanguage = 'zh-CN' // 'wuu-CN' //
+                    speechConfig.speechSynthesisVoiceName = `zh-CN-XiaoxiaoMultilingualNeural` // `en-US-OnyxMultilingualNeural` // 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
 
-            typeof callback === 'function' && callback(speechConfig)
-        } else {
-            speechConfig = stateSpeechConfig
-        }
+                    typeof callback === 'function' && callback(speechConfig)
+                } else {
+                    speechConfig = stateSpeechConfig
+                }
 
-        const audio = new SpeechSDK.SpeakerAudioDestination()
-        // audio.format = SpeechSDK.AudioStreamFormat.getWaveFormat(16000, 1, 16, SpeechSDK.AudioFormatTag.MP3)
-        audio.onAudioEnd = () => {
-            clearTimeout(lazyResolve)
-            console.log(`onAudioEnd`)
-            synthesizer?.close()
-            synthesizer = undefined
-            fetch(`/api/logCatch`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ type: 'info', info: `onAudioEnd, time: ${new Date()}` }),
-            })
-            resolve(true)
-        }
-        audio.onAudioStart = () => {
-            console.log(`onAudioStart`)
-            fetch(`/api/logCatch`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ type: 'info', info: `onAudioStart, time: ${new Date()}` }),
-            })
-            // alert(`onAudioStart`)
-        }
-
-        const myStream = new MyPushAudioOutputStream()
-        if (speechConfig) {
-            // const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
-            const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(myStream)
-            synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
-            synthesizer?.speakTextAsync(
-                inputText,
-                function (result) {
-                    if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
-                        console.log('TTS Speech synthesized for text: ' + inputText)
-
-                        fetch(`/api/logCatch`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                type: 'info',
-                                info: `result.reason: ${result.reason}, input: ${inputText}, time: ${new Date()}`,
-                            }),
-                        })
-
-                        setTimeout(() => {
-                            resolve(true)
-                        }, 15 * 1000)
-                        // resolve(true)
-                    } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
-                        alert(`error, cancel, ${result.errorDetails}`)
-                        console.log('TTS Error: ' + result.errorDetails)
-                        fetch(`/api/logCatch`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                type: 'info',
-                                info: `result.reason: ${result.reason}, TTS Error:: ${result.errorDetails}, time: ${new Date()}`,
-                            }),
-                        })
-                        resolve(false)
-                    }
-                    console.log(`tts result====>`, result)
+                const audio = new SpeechSDK.SpeakerAudioDestination()
+                // audio.format = SpeechSDK.AudioStreamFormat.getWaveFormat(16000, 1, 16, SpeechSDK.AudioFormatTag.MP3)
+                audio.onAudioEnd = () => {
+                    clearTimeout(lazyResolve)
+                    console.log(`onAudioEnd`)
                     synthesizer?.close()
                     synthesizer = undefined
-
-                    // lazyResolve = setTimeout(() => {
-                    //     alert(`error, timeout, ${audio.isClosed}`)
-                    //     audio.close()
-                    //     synthesizer?.close()
-                    //     synthesizer = undefined
-                    //     resolve(true)
-                    // }, 15 * 1000)
-                },
-                function (err) {
-                    alert(`error, reject`)
-                    console.log(`reject`, err)
                     fetch(`/api/logCatch`, {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
                         },
-                        body: JSON.stringify({ type: 'info', info: `reject ${err}, time: ${new Date()}` }),
+                        body: JSON.stringify({ type: 'info', info: `onAudioEnd, time: ${new Date()}` }),
                     })
-                    synthesizer?.close()
-                    synthesizer = undefined
-                    resolve(false)
+                    resolve(true)
                 }
-            )
-        }
+                audio.onAudioStart = () => {
+                    console.log(`onAudioStart`)
+                    fetch(`/api/logCatch`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ type: 'info', info: `onAudioStart, time: ${new Date()}` }),
+                    })
+                    // alert(`onAudioStart`)
+                }
+
+                // const myStream = new MyPushAudioOutputStream()
+                if (speechConfig) {
+                    const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
+                    // const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(myStream)
+                    synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
+                    synthesizer?.speakTextAsync(
+                        inputText,
+                        function (result) {
+                            if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
+                                console.log('TTS Speech synthesized for text: ' + inputText)
+
+                                fetch(`/api/logCatch`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        type: 'info',
+                                        info: `result.reason: ${result.reason}, input: ${inputText}, time: ${new Date()}`,
+                                    }),
+                                })
+
+                                setTimeout(() => {
+                                    resolve(true)
+                                }, 15 * 1000)
+                                // resolve(true)
+                            } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
+                                alert(`error, cancel, ${result.errorDetails}`)
+                                console.log('TTS Error: ' + result.errorDetails)
+                                fetch(`/api/logCatch`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        type: 'info',
+                                        info: `result.reason: ${result.reason}, TTS Error:: ${result.errorDetails}, time: ${new Date()}`,
+                                    }),
+                                })
+                                resolve(false)
+                            }
+                            console.log(`tts result====>`, result)
+                            synthesizer?.close()
+                            synthesizer = undefined
+
+                            // lazyResolve = setTimeout(() => {
+                            //     alert(`error, timeout, ${audio.isClosed}`)
+                            //     audio.close()
+                            //     synthesizer?.close()
+                            //     synthesizer = undefined
+                            //     resolve(true)
+                            // }, 15 * 1000)
+                        },
+                        function (err) {
+                            alert(`error, reject`)
+                            console.log(`reject`, err)
+                            fetch(`/api/logCatch`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({ type: 'info', info: `reject ${err}, time: ${new Date()}` }),
+                            })
+                            synthesizer?.close()
+                            synthesizer = undefined
+                            resolve(false)
+                        }
+                    )
+                }
+            })
+            .catch(err => {
+                console.log(`getUserMedia error: ${err}`)
+                resolve(false)
+            })
     })
 }
 
