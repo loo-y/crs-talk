@@ -447,6 +447,8 @@ const helperTts = async (
             navigator.mediaDevices
                 .getUserMedia({ audio: true, video: false })
                 .then(() => {
+                    audio.pause()
+                    audio.resume()
                     console.log(`onAudioStart`)
                     fetch(`/api/logCatch`, {
                         method: 'POST',
