@@ -465,13 +465,23 @@ const helperTts = async (
             synthesizer?.speakTextAsync(
                 inputText,
                 function (result) {
-                    if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
-                        console.log('TTS Speech synthesized for text: ' + inputText)
-                        navigator.mediaDevices
-                            .getUserMedia({ audio: true, video: false })
-                            .then(() => {
-                                audio.pause()
-                                audio.resume()
+                    navigator.mediaDevices
+                        .getUserMedia({ audio: true, video: false })
+                        .then(() => {
+                            fetch(`/api/logCatch`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    type: 'info',
+                                    info: `result.reason: ${result.reason}, time: ${new Date()}`,
+                                }),
+                            })
+
+                            if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
+                                console.log('TTS Speech synthesized for text: ' + inputText)
+
                                 fetch(`/api/logCatch`, {
                                     method: 'POST',
                                     headers: {
@@ -479,12 +489,17 @@ const helperTts = async (
                                     },
                                     body: JSON.stringify({
                                         type: 'info',
-                                        info: `audio pause and resume time: ${new Date()}`,
+                                        info: `result.reason: ${result.reason}, input: ${inputText}, time: ${new Date()}`,
                                     }),
                                 })
-                            })
-                            .catch(err => {
-                                console.log(`getUserMedia error: ${err}`)
+
+                                // setTimeout(() => {
+                                //     resolve(true)
+                                // }, 15 * 1000)
+                                // resolve(true)
+                            } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
+                                alert(`error, cancel, ${result.errorDetails}`)
+                                console.log('TTS Error: ' + result.errorDetails)
                                 fetch(`/api/logCatch`, {
                                     method: 'POST',
                                     headers: {
@@ -492,42 +507,27 @@ const helperTts = async (
                                     },
                                     body: JSON.stringify({
                                         type: 'info',
-                                        info: `getUserMedia error: ${err.toString()}, time: ${new Date()}`,
+                                        info: `result.reason: ${result.reason}, TTS Error:: ${result.errorDetails}, time: ${new Date()}`,
                                     }),
                                 })
                                 resolve(false)
+                            }
+                        })
+                        .catch(err => {
+                            console.log(`getUserMedia error: ${err}`)
+                            fetch(`/api/logCatch`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                    type: 'info',
+                                    info: `getUserMedia error: ${err.toString()}, time: ${new Date()}`,
+                                }),
                             })
-
-                        fetch(`/api/logCatch`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                type: 'info',
-                                info: `result.reason: ${result.reason}, input: ${inputText}, time: ${new Date()}`,
-                            }),
+                            resolve(false)
                         })
 
-                        // setTimeout(() => {
-                        //     resolve(true)
-                        // }, 15 * 1000)
-                        // resolve(true)
-                    } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
-                        alert(`error, cancel, ${result.errorDetails}`)
-                        console.log('TTS Error: ' + result.errorDetails)
-                        fetch(`/api/logCatch`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                                type: 'info',
-                                info: `result.reason: ${result.reason}, TTS Error:: ${result.errorDetails}, time: ${new Date()}`,
-                            }),
-                        })
-                        resolve(false)
-                    }
                     console.log(`tts result====>`, result)
                     synthesizer?.close()
                     synthesizer = undefined
