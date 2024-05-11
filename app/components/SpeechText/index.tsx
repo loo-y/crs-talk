@@ -444,34 +444,14 @@ const helperTts = async (
             resolve(true)
         }
         audio.onAudioStart = () => {
-            navigator.mediaDevices
-                .getUserMedia({ audio: true, video: false })
-                .then(() => {
-                    audio.pause()
-                    audio.resume()
-                    console.log(`onAudioStart`)
-                    fetch(`/api/logCatch`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ type: 'info', info: `onAudioStart, time: ${new Date()}` }),
-                    })
-                })
-                .catch(err => {
-                    console.log(`getUserMedia error: ${err}`)
-                    fetch(`/api/logCatch`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            type: 'info',
-                            info: `getUserMedia error: ${err.toString()}, time: ${new Date()}`,
-                        }),
-                    })
-                    resolve(false)
-                })
+            console.log(`onAudioStart`)
+            fetch(`/api/logCatch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ type: 'info', info: `onAudioStart, time: ${new Date()}` }),
+            })
 
             // alert(`onAudioStart`)
         }
@@ -487,6 +467,36 @@ const helperTts = async (
                 function (result) {
                     if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
                         console.log('TTS Speech synthesized for text: ' + inputText)
+                        navigator.mediaDevices
+                            .getUserMedia({ audio: true, video: false })
+                            .then(() => {
+                                audio.pause()
+                                audio.resume()
+                                fetch(`/api/logCatch`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        type: 'info',
+                                        info: `audio pause and resume time: ${new Date()}`,
+                                    }),
+                                })
+                            })
+                            .catch(err => {
+                                console.log(`getUserMedia error: ${err}`)
+                                fetch(`/api/logCatch`, {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                    },
+                                    body: JSON.stringify({
+                                        type: 'info',
+                                        info: `getUserMedia error: ${err.toString()}, time: ${new Date()}`,
+                                    }),
+                                })
+                                resolve(false)
+                            })
 
                         fetch(`/api/logCatch`, {
                             method: 'POST',
