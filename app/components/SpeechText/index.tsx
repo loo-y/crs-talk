@@ -411,58 +411,58 @@ const helperTts = async (
     // alert(`speechToken.region: ${speechToken.region}`)
     console.log(`speechToken.region`, speechToken, speechToken.region)
     return new Promise((resolve, reject) => {
-        navigator.mediaDevices
-            .getUserMedia({ audio: true, video: false })
-            .then(() => {
-                let lazyResolve: any
-                let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
-                let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined
-                if (!stateSpeechConfig) {
-                    speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
-                        speechToken?.authToken || ``,
-                        speechToken?.region || ``
-                    )
-                    // speechConfig.speechSynthesisLanguage = 'zh-CN' // 'wuu-CN' //
-                    speechConfig.speechSynthesisVoiceName = `zh-CN-XiaoxiaoMultilingualNeural` // `en-US-OnyxMultilingualNeural` // 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
+        let lazyResolve: any
+        let synthesizer: SpeechSDK.SpeechSynthesizer | undefined = undefined
+        let speechConfig: SpeechSDK.SpeechConfig | undefined = undefined
+        if (!stateSpeechConfig) {
+            speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(
+                speechToken?.authToken || ``,
+                speechToken?.region || ``
+            )
+            // speechConfig.speechSynthesisLanguage = 'zh-CN' // 'wuu-CN' //
+            speechConfig.speechSynthesisVoiceName = `zh-CN-XiaoxiaoMultilingualNeural` // `en-US-OnyxMultilingualNeural` // 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
 
-                    typeof callback === 'function' && callback(speechConfig)
-                } else {
-                    speechConfig = stateSpeechConfig
-                }
+            typeof callback === 'function' && callback(speechConfig)
+        } else {
+            speechConfig = stateSpeechConfig
+        }
 
-                const audio = new SpeechSDK.SpeakerAudioDestination()
-                // audio.format = SpeechSDK.AudioStreamFormat.getWaveFormat(16000, 1, 16, SpeechSDK.AudioFormatTag.MP3)
-                audio.onAudioEnd = () => {
-                    clearTimeout(lazyResolve)
-                    console.log(`onAudioEnd`)
-                    synthesizer?.close()
-                    synthesizer = undefined
-                    fetch(`/api/logCatch`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ type: 'info', info: `onAudioEnd, time: ${new Date()}` }),
-                    })
-                    resolve(true)
-                }
-                audio.onAudioStart = () => {
-                    console.log(`onAudioStart`)
-                    fetch(`/api/logCatch`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ type: 'info', info: `onAudioStart, time: ${new Date()}` }),
-                    })
-                    // alert(`onAudioStart`)
-                }
+        const audio = new SpeechSDK.SpeakerAudioDestination()
+        // audio.format = SpeechSDK.AudioStreamFormat.getWaveFormat(16000, 1, 16, SpeechSDK.AudioFormatTag.MP3)
+        audio.onAudioEnd = () => {
+            clearTimeout(lazyResolve)
+            console.log(`onAudioEnd`)
+            synthesizer?.close()
+            synthesizer = undefined
+            fetch(`/api/logCatch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ type: 'info', info: `onAudioEnd, time: ${new Date()}` }),
+            })
+            resolve(true)
+        }
+        audio.onAudioStart = () => {
+            console.log(`onAudioStart`)
+            fetch(`/api/logCatch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ type: 'info', info: `onAudioStart, time: ${new Date()}` }),
+            })
+            // alert(`onAudioStart`)
+        }
 
-                // const myStream = new MyPushAudioOutputStream()
-                if (speechConfig) {
-                    const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
-                    // const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(myStream)
-                    synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
+        // const myStream = new MyPushAudioOutputStream()
+        if (speechConfig) {
+            const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
+            // const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(myStream)
+            synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
+            navigator.mediaDevices
+                .getUserMedia({ audio: true, video: false })
+                .then(() => {
                     synthesizer?.speakTextAsync(
                         inputText,
                         function (result) {
@@ -526,22 +526,22 @@ const helperTts = async (
                             resolve(false)
                         }
                     )
-                }
-            })
-            .catch(err => {
-                console.log(`getUserMedia error: ${err}`)
-                fetch(`/api/logCatch`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        type: 'info',
-                        info: `getUserMedia error: ${err.toString()}, time: ${new Date()}`,
-                    }),
                 })
-                resolve(false)
-            })
+                .catch(err => {
+                    console.log(`getUserMedia error: ${err}`)
+                    fetch(`/api/logCatch`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            type: 'info',
+                            info: `getUserMedia error: ${err.toString()}, time: ${new Date()}`,
+                        }),
+                    })
+                    resolve(false)
+                })
+        }
     })
 }
 
