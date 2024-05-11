@@ -455,9 +455,10 @@ const helperTts = async (
             // alert(`onAudioStart`)
         }
 
+        const myStream = new MyPushAudioOutputStream()
         if (speechConfig) {
             // const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
-            const audioConfig = SpeechSDK.AudioConfig.fromDefaultSpeakerOutput()
+            const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(myStream)
             synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
             synthesizer?.speakTextAsync(
                 inputText,
@@ -585,5 +586,96 @@ const helperCheckDeviceInUse = async (deviceId: string) => {
     } catch (err) {
         console.error('enumerateDevices() 失败:', err)
         return false
+    }
+}
+
+class MyPushAudioOutputStream extends SpeechSDK.PushAudioOutputStreamCallback {
+    private internalBuffer: ArrayBuffer
+    constructor() {
+        super()
+        // 初始化一个空的 ArrayBuffer 作为内部缓冲区
+        this.internalBuffer = new ArrayBuffer(0)
+    }
+
+    write(dataBuffer: ArrayBuffer) {
+        // 在这里实现将音频数据写入数据缓冲区的逻辑
+        console.log('Writing audio data:', dataBuffer)
+        // 计算当前内部缓冲区的大小
+        let currentLength = this.internalBuffer.byteLength
+
+        // 创建一个新的 ArrayBuffer，大小为当前内部缓冲区大小加上新数据的大小
+        let newBuffer = new ArrayBuffer(currentLength + dataBuffer.byteLength)
+
+        // 创建 DataView 来访问新的 ArrayBuffer
+        let newView = new DataView(newBuffer)
+
+        // 如果内部缓冲区不为空，则将内部缓冲区的数据复制到新的 ArrayBuffer 中
+        if (currentLength > 0) {
+            let oldView = new DataView(this.internalBuffer)
+            for (let i = 0; i < currentLength; i++) {
+                newView.setUint8(i, oldView.getUint8(i))
+            }
+        }
+
+        // 将新数据复制到新的 ArrayBuffer 中
+        let dataView = new DataView(dataBuffer)
+        for (let i = 0; i < dataBuffer.byteLength; i++) {
+            newView.setUint8(currentLength + i, dataView.getUint8(i))
+        }
+
+        // 更新内部缓冲区为新的 ArrayBuffer
+        this.internalBuffer = newBuffer
+    }
+
+    close() {
+        // 实际的实现可能涉及将数据发送到音频输出流或其他处理
+        // 创建 AudioContext 实例
+        const audioContext = new window.AudioContext()
+
+        // 创建一个 Blob 对象，用于创建 Blob URL
+        const blob = new Blob([this.internalBuffer], { type: 'audio/wav' }) // 假设音频数据是 WAV 格式
+        const blobURL = URL.createObjectURL(blob)
+        // 使用 getUserMedia 触发用户交互
+        navigator.mediaDevices
+            .getUserMedia({ audio: true, video: false })
+            .then(() => {
+                // 用户已经进行了交互，可以开始播放音频
+                // 加载 Blob URL 到 AudioBuffer
+                fetch(blobURL)
+                    .then(response => response.arrayBuffer())
+                    .then(arrayBuffer => audioContext.decodeAudioData(arrayBuffer))
+                    .then(audioBuffer => {
+                        // 创建 AudioBufferSourceNode
+                        const source = audioContext.createBufferSource()
+                        source.buffer = audioBuffer
+                        // 连接到目的地（扬声器）
+                        source.connect(audioContext.destination)
+                        // 开始播放
+                        source.start()
+                    })
+                    .catch(error => {
+                        console.error('Error decoding audio data:', error)
+                    })
+            })
+            .catch(error => {
+                console.error('getUserMedia error:', error)
+            })
+
+        // 释放 Blob URL 资源
+        // URL.revokeObjectURL(blobURL);
+
+        //   // 创建一个 Audio 元素
+        //   const audioElement = new Audio(blobURL);
+
+        //   // 播放音频
+        //   audioElement.play().catch(error => {
+        //   console.error('Error playing audio:', error);
+        //   }).finally(() => {
+        //   // 在播放结束后，关闭音频输出流
+
+        //   });
+        // 在这里实现关闭音频输出流的逻辑
+        console.log('Closing the audio output stream')
+        // 实际的实现可能涉及清理资源或发送关闭信号
     }
 }
