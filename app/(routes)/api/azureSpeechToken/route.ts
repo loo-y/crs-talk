@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 // import * as dotenv from 'dotenv'
 // dotenv.config()
 
@@ -13,6 +14,7 @@ const { AZURE_SPEECH_KEY: azureSpeechKey = '', AZURE_SPEECH_REGION: azureSpeechr
 // https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/language-support?tabs=stt#speech-to-text
 
 export async function GET(request: NextRequest) {
+    const headersList = headers()
     let response
     if (azureSpeechKey === 'paste-your-speech-key-here' || azureSpeechregion === 'paste-your-speech-region-here') {
         response = NextResponse.json({ error: `auth failed`, status: false }, { status: 400 })
@@ -23,6 +25,9 @@ export async function GET(request: NextRequest) {
                 'Ocp-Apim-Subscription-Key': azureSpeechKey,
                 // 'Content-Type': 'application/x-www-form-urlencoded',
                 'Content-Type': 'application/json',
+                'User-Agent': headersList.get('user-agent') || '',
+                Cookie: headersList.get('cookie') || '',
+                Origin: headersList.get('host') ? `https://${headersList.get('host')}/` : '',
             },
             body: null,
         }
