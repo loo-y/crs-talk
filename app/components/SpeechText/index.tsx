@@ -366,7 +366,7 @@ const helperSttFromMic = async (
     const speechConfig = SpeechSDK.SpeechConfig.fromAuthorizationToken(speechToken.authToken, speechToken.region)
     speechConfig.speechRecognitionLanguage = 'zh-CN'
 
-    let recognizer
+    let recognizer // : SpeechSDK.SpeechRecognizer
     if (!stateRecognizer) {
         const audioConfig = SpeechSDK.AudioConfig.fromDefaultMicrophoneInput()
         recognizer = new SpeechSDK.SpeechRecognizer(speechConfig, audioConfig)
@@ -383,6 +383,11 @@ const helperSttFromMic = async (
     }
 
     recognizer.startContinuousRecognitionAsync()
+
+    // recognizer.sessionStopped = (s, e) => {
+    //     console.log("\n    Session stopped event.");
+    //     // recognizer.stopContinuousRecognitionAsync();
+    // };
 
     if (callback) {
         callback(recognizer)
@@ -423,21 +428,35 @@ const helperTts = async (
         }
 
         const audio = new SpeechSDK.SpeakerAudioDestination()
-        audio.format = SpeechSDK.AudioStreamFormat.getWaveFormat(16000, 1, 16, SpeechSDK.AudioFormatTag.MP3)
+        // audio.format = SpeechSDK.AudioStreamFormat.getWaveFormat(16000, 1, 16, SpeechSDK.AudioFormatTag.MP3)
         audio.onAudioEnd = () => {
             clearTimeout(lazyResolve)
             console.log(`onAudioEnd`)
             synthesizer?.close()
             synthesizer = undefined
+            fetch(`/api/logCatch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ type: 'info', info: `onAudioEnd, time: ${new Date()}` }),
+            })
             resolve(true)
         }
         audio.onAudioStart = () => {
             console.log(`onAudioStart`)
+            fetch(`/api/logCatch`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ type: 'info', info: `onAudioStart, time: ${new Date()}` }),
+            })
             // alert(`onAudioStart`)
         }
 
         if (speechConfig) {
-            const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(audio)
+            const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
             // const audioConfig = SpeechSDK.AudioConfig.fromDefaultSpeakerOutput()
             synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
             synthesizer?.speakTextAsync(
@@ -445,10 +464,32 @@ const helperTts = async (
                 function (result) {
                     if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
                         console.log('TTS Speech synthesized for text: ' + inputText)
+
+                        fetch(`/api/logCatch`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                type: 'info',
+                                info: `result.reason: ${result.reason}, input: ${inputText}, time: ${new Date()}`,
+                            }),
+                        })
+
                         // resolve(true)
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
                         alert(`error, cancel, ${result.errorDetails}`)
                         console.log('TTS Error: ' + result.errorDetails)
+                        fetch(`/api/logCatch`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                type: 'info',
+                                info: `result.reason: ${result.reason}, TTS Error:: ${result.errorDetails}, time: ${new Date()}`,
+                            }),
+                        })
                         resolve(false)
                     }
                     console.log(`tts result====>`, result)
@@ -466,6 +507,13 @@ const helperTts = async (
                 function (err) {
                     alert(`error, reject`)
                     console.log(`reject`, err)
+                    fetch(`/api/logCatch`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ type: 'info', info: `reject ${err}, time: ${new Date()}` }),
+                    })
                     synthesizer?.close()
                     synthesizer = undefined
                     resolve(false)

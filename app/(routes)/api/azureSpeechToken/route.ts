@@ -21,7 +21,8 @@ export async function GET(request: NextRequest) {
             method: 'POST',
             headers: {
                 'Ocp-Apim-Subscription-Key': azureSpeechKey,
-                'Content-Type': 'application/x-www-form-urlencoded',
+                // 'Content-Type': 'application/x-www-form-urlencoded',
+                'Content-Type': 'application/json',
             },
             body: null,
         }
