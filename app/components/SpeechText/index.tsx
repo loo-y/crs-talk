@@ -456,8 +456,8 @@ const helperTts = async (
         }
 
         if (speechConfig) {
-            const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
-            // const audioConfig = SpeechSDK.AudioConfig.fromDefaultSpeakerOutput()
+            // const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
+            const audioConfig = SpeechSDK.AudioConfig.fromDefaultSpeakerOutput()
             synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
             synthesizer?.speakTextAsync(
                 inputText,
@@ -476,6 +476,9 @@ const helperTts = async (
                             }),
                         })
 
+                        setTimeout(() => {
+                            resolve(true)
+                        }, 15 * 1000)
                         // resolve(true)
                     } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
                         alert(`error, cancel, ${result.errorDetails}`)
