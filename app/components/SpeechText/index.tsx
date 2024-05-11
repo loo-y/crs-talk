@@ -456,77 +456,66 @@ const helperTts = async (
             // alert(`onAudioStart`)
         }
 
-        // const myStream = new MyPushAudioOutputStream()
+        const myCRSTalkCallback = new CRSTalkPushAudioOutputStreamCallback(() => {
+            resolve(true)
+        })
+        // const myullAudioOutputStream = new MyAudioOutputStream()
+        // myullAudioOutputStream.create(myCRSTalkCallback)
         if (speechConfig) {
-            const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
-            // const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(myStream)
+            // myullAudioOutputStream.create(myCRSTalkCallback)
+            // const audioConfig = SpeechSDK.AudioConfig.fromSpeakerOutput(audio)
+            const audioConfig = SpeechSDK.AudioConfig.fromStreamOutput(myCRSTalkCallback)
             synthesizer = new SpeechSDK.SpeechSynthesizer(speechConfig, audioConfig)
 
             synthesizer?.speakTextAsync(
                 inputText,
                 function (result) {
-                    navigator.mediaDevices
-                        .getUserMedia({ audio: true, video: false })
-                        .then(() => {
-                            fetch(`/api/logCatch`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    type: 'info',
-                                    info: `result.reason: ${result.reason}, time: ${new Date()}`,
-                                }),
-                            })
+                    fetch(`/api/logCatch`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            type: 'info',
+                            info: `result.reason: ${result.reason}, time: ${new Date()}`,
+                        }),
+                    })
 
-                            if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
-                                console.log('TTS Speech synthesized for text: ' + inputText)
+                    if (result.reason === SpeechSDK.ResultReason.SynthesizingAudioCompleted) {
+                        console.log('TTS Speech synthesized for text: ' + inputText)
 
-                                fetch(`/api/logCatch`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        type: 'info',
-                                        info: `result.reason: ${result.reason}, input: ${inputText}, time: ${new Date()}`,
-                                    }),
-                                })
-
-                                // setTimeout(() => {
-                                //     resolve(true)
-                                // }, 15 * 1000)
-                                // resolve(true)
-                            } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
-                                alert(`error, cancel, ${result.errorDetails}`)
-                                console.log('TTS Error: ' + result.errorDetails)
-                                fetch(`/api/logCatch`, {
-                                    method: 'POST',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                    },
-                                    body: JSON.stringify({
-                                        type: 'info',
-                                        info: `result.reason: ${result.reason}, TTS Error:: ${result.errorDetails}, time: ${new Date()}`,
-                                    }),
-                                })
-                                resolve(false)
-                            }
+                        // myullAudioOutputStream.createPullStream()
+                        // myullAudioOutputStream.read()
+                        fetch(`/api/logCatch`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                type: 'info',
+                                info: `result.reason: ${result.reason}, input: ${inputText}, time: ${new Date()}`,
+                            }),
                         })
-                        .catch(err => {
-                            console.log(`getUserMedia error: ${err}`)
-                            fetch(`/api/logCatch`, {
-                                method: 'POST',
-                                headers: {
-                                    'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                    type: 'info',
-                                    info: `getUserMedia error: ${err.toString()}, time: ${new Date()}`,
-                                }),
-                            })
-                            resolve(false)
+
+                        // setTimeout(() => {
+                        //     resolve(true)
+                        // }, 15 * 1000)
+                        // resolve(true)
+                    } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
+                        alert(`error, cancel, ${result.errorDetails}`)
+                        console.log('TTS Error: ' + result.errorDetails)
+                        fetch(`/api/logCatch`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                type: 'info',
+                                info: `result.reason: ${result.reason}, TTS Error:: ${result.errorDetails}, time: ${new Date()}`,
+                            }),
                         })
+                        resolve(false)
+                    }
 
                     console.log(`tts result====>`, result)
                     synthesizer?.close()
@@ -554,6 +543,7 @@ const helperTts = async (
                     synthesizer = undefined
                     resolve(false)
                 }
+                // myullAudioOutputStream
             )
         }
     })
@@ -621,12 +611,48 @@ const helperCheckDeviceInUse = async (deviceId: string) => {
     }
 }
 
-class MyPushAudioOutputStream extends SpeechSDK.PushAudioOutputStreamCallback {
+class MyAudioOutputStream extends SpeechSDK.PushAudioOutputStream {
     private internalBuffer: ArrayBuffer
+    private _format: SpeechSDK.AudioStreamFormat | undefined // 假设 AudioStreamFormat 是一个已定义的类型
+
     constructor() {
         super()
         // 初始化一个空的 ArrayBuffer 作为内部缓冲区
         this.internalBuffer = new ArrayBuffer(0)
+    }
+
+    set format(format: SpeechSDK.AudioStreamFormat) {
+        // 实现设置音频流格式的逻辑
+        this._format = format
+        console.log('Format set:', format)
+    }
+
+    // createPullStream(){
+    //     console.log(`createPullStream`)
+    // }
+    // async read(dataBuffer?: ArrayBuffer) {
+    //     console.log('readingd audio data:', dataBuffer)
+    //     return 1;
+    // }
+
+    create(callback: SpeechSDK.PushAudioOutputStreamCallback) {
+        console.log(`create`, callback)
+        SpeechSDK.PushAudioOutputStream.create(callback)
+    }
+    close(): void {
+        // 在这里实现音频输出流的关闭逻辑
+        console.log('Closing audio output stream')
+        // // 释放内部缓冲区
+    }
+}
+class CRSTalkPushAudioOutputStreamCallback extends SpeechSDK.PushAudioOutputStreamCallback {
+    private internalBuffer: ArrayBuffer
+    private onClose?: () => void
+    constructor(onClose?: () => void) {
+        super()
+        // 初始化一个空的 ArrayBuffer 作为内部缓冲区
+        this.internalBuffer = new ArrayBuffer(0)
+        this.onClose = onClose
     }
 
     write(dataBuffer: ArrayBuffer) {
@@ -684,6 +710,10 @@ class MyPushAudioOutputStream extends SpeechSDK.PushAudioOutputStreamCallback {
                         source.connect(audioContext.destination)
                         // 开始播放
                         source.start()
+                        source.onended = () => {
+                            console.log('Audio playback has ended.')
+                            this.onClose && this.onClose()
+                        }
                     })
                     .catch(error => {
                         console.error('Error decoding audio data:', error)
@@ -691,6 +721,8 @@ class MyPushAudioOutputStream extends SpeechSDK.PushAudioOutputStreamCallback {
             })
             .catch(error => {
                 console.error('getUserMedia error:', error)
+                // 在这里处理错误
+                this.onClose && this.onClose()
             })
 
         // 释放 Blob URL 资源
