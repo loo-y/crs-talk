@@ -480,9 +480,9 @@ const helperTts = async (
                                     }),
                                 })
 
-                                setTimeout(() => {
-                                    resolve(true)
-                                }, 15 * 1000)
+                                // setTimeout(() => {
+                                //     resolve(true)
+                                // }, 15 * 1000)
                                 // resolve(true)
                             } else if (result.reason === SpeechSDK.ResultReason.Canceled) {
                                 alert(`error, cancel, ${result.errorDetails}`)
@@ -530,6 +530,16 @@ const helperTts = async (
             })
             .catch(err => {
                 console.log(`getUserMedia error: ${err}`)
+                fetch(`/api/logCatch`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        type: 'info',
+                        info: `getUserMedia error: ${err.toString()}, time: ${new Date()}`,
+                    }),
+                })
                 resolve(false)
             })
     })
