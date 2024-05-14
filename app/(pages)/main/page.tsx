@@ -20,7 +20,7 @@ const Main = () => {
     }, [])
 
     return (
-        <div className="">
+        <div className="flex flex-col w-full items-center">
             <SpeechText />
         </div>
     )

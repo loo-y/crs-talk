@@ -9,6 +9,7 @@ import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
 import AudioVisualizer from '../AudioVisualizer'
 import TextVisualizer from '../AudioVisualizer/TextVisualizer'
 import CssVisualizer from '../AudioVisualizer/CssVisualizer'
+import VoicePick from '../VoicePick'
 
 const textAudioPlayQueue: string[] = []
 let streamInQueuePlaying = false
@@ -30,6 +31,7 @@ export default function SpeechText({}: {}) {
     const [stateTTSSpeechConfig, setStateTTSSpeechConfig] = useState<Record<string, any>>()
     const [speechTokenOpenAI, setSpeechTokenOpenAI] = useState<SpeechToken>()
     const talkMessageListRef = useRef<HTMLDivElement>(null)
+    const [selectVoice, setSelectVoice] = useState<Record<string, any>>({})
 
     let recordingIdleTimer: any = null
     const handleRecording = (speechRecognitionResult: Record<string, any>) => {
@@ -109,14 +111,18 @@ export default function SpeechText({}: {}) {
             }
             if (textPlay) {
                 // console.log(`speechTokenOpenAI?.authToken`, speechTokenOpenAI, speechToken, speechTokenOpenAI?.authToken ? speechTokenOpenAI : speechToken)
-                await helperTts(
-                    textPlay,
-                    stateTTSSpeechConfig,
-                    speechTokenOpenAI?.authToken ? speechTokenOpenAI : speechToken,
-                    speechConfig => {
+                await helperTts({
+                    inputText: textPlay,
+                    stateSpeechConfig: stateTTSSpeechConfig,
+                    voiceName: selectVoice?.value || undefined,
+                    speechToken:
+                        speechTokenOpenAI?.authToken && selectVoice?.value && selectVoice?.isOpenai
+                            ? speechTokenOpenAI
+                            : speechToken,
+                    callback: speechConfig => {
                         setStateTTSSpeechConfig(speechConfig)
-                    }
-                )
+                    },
+                })
             }
         }
         // setStreamInQueuePlaying(false)
@@ -251,6 +257,10 @@ export default function SpeechText({}: {}) {
         // }
     }, [recordedTextList, isRecording])
 
+    const handleOnVoicePick = (voice: Record<string, any>) => {
+        console.log(`handleOnVoicePick`, voice)
+        setSelectVoice(voice)
+    }
     const handleTestTTS = () => {
         let streamText = ''
         helperGetAIResponse({
@@ -288,67 +298,74 @@ export default function SpeechText({}: {}) {
         })
     }
     return (
-        <div className=" w-[20rem] flex flex-col gap-2">
-            <div className="flex talkCircle flex-col gap-2">
-                {/* {_.map(recordedTextList, (recordItem, recordIndex) => {
+        <>
+            <div className="flex flex-row justify-end mt-2 w-full mb-2">
+                <div className="flex flex-row justify-end mr-2">
+                    <VoicePick onPick={handleOnVoicePick} />
+                </div>
+            </div>
+            <div className=" w-[20rem] flex flex-col gap-2">
+                <div className="flex talkCircle flex-col gap-2">
+                    {/* {_.map(recordedTextList, (recordItem, recordIndex) => {
                     return (
                         <div key={`record-${recordIndex}`} className="flex">
                             {recordItem?.text || ''}
                         </div>
                     )
                 })} */}
-                <CssVisualizer isMicOn={isRecording || false} />
-                {/* <AudioVisualizer isMicOn={isRecording || false} /> */}
-                {/* <TextVisualizer textSpeed={textSpeed} /> */}
-            </div>
-            <div className="flex functional flex-row justify-between items-center">
-                <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
-                    <div className="">{talkStart ? (isRecording ? 'Recording' : 'Please Wait') : ''}</div>
+                    <CssVisualizer isMicOn={isRecording || false} />
+                    {/* <AudioVisualizer isMicOn={isRecording || false} /> */}
+                    {/* <TextVisualizer textSpeed={textSpeed} /> */}
                 </div>
-                <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
-                    {talkStart ? (
-                        <>
-                            <div className="">Stop</div>
-                            <div
-                                className="flex stop w-5 h-5 bg-red-800 cursor-pointer rounded-full"
-                                onClick={() => updateTalkStart(false)}
-                            ></div>
-                        </>
-                    ) : (
-                        <>
-                            <div className="">Start</div>
-                            <div
-                                className="flex stop w-5 h-5 bg-green-800 cursor-pointer rounded-full"
-                                onClick={() => updateTalkStart(true)}
-                                // onClick={() => handleTestTTS()}
-                            ></div>
-                        </>
+                <div className="flex functional flex-row justify-between items-center">
+                    <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
+                        <div className="">{talkStart ? (isRecording ? 'Recording' : 'Please Wait') : ''}</div>
+                    </div>
+                    <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
+                        {talkStart ? (
+                            <>
+                                <div className="">Stop</div>
+                                <div
+                                    className="flex stop w-5 h-5 bg-red-800 cursor-pointer rounded-full"
+                                    onClick={() => updateTalkStart(false)}
+                                ></div>
+                            </>
+                        ) : (
+                            <>
+                                <div className="">Start</div>
+                                <div
+                                    className="flex stop w-5 h-5 bg-green-800 cursor-pointer rounded-full"
+                                    onClick={() => updateTalkStart(true)}
+                                    // onClick={() => handleTestTTS()}
+                                ></div>
+                            </>
+                        )}
+                    </div>
+                </div>
+                <div
+                    className="flex flex-col overflow-x-hidden overflow-y-scroll max-h-[12rem] h-fit px-2 gap-2"
+                    ref={talkMessageListRef}
+                >
+                    {_.map(talkMessageList, (talkItem, talkIndex) => {
+                        if (talkItem.role == `system`) {
+                            return null
+                        }
+                        return (
+                            <div key={`talk-${talkIndex}`} className="flex flex-row items-start text-sm">
+                                <div className="flex w-16">{talkItem.role == 'assistant' ? `AI` : `用户`} :</div>
+                                <div className="flex flex-1">{talkItem?.content || ''}</div>
+                            </div>
+                        )
+                    })}
+                    {_.isEmpty(recordedTextList) ? null : (
+                        <div className="flex flex-row items-start text-sm">
+                            <div className="flex w-16">{`用户`} :</div>
+                            <div className="flex flex-1">{_.map(recordedTextList, 'text').join(', ') || ''}</div>
+                        </div>
                     )}
                 </div>
             </div>
-            <div
-                className="flex flex-col overflow-x-hidden overflow-y-scroll max-h-[12rem] h-fit px-2 gap-2"
-                ref={talkMessageListRef}
-            >
-                {_.map(talkMessageList, (talkItem, talkIndex) => {
-                    if (talkItem.role == `system`) {
-                        return null
-                    }
-                    return (
-                        <div key={`talk-${talkIndex}`} className="flex flex-row items-start text-sm">
-                            <div className="flex w-16">{talkItem.role == 'assistant' ? `AI` : `用户`} :</div>
-                            <div className="flex flex-1">{talkItem?.content || ''}</div>
-                        </div>
-                    )
-                })}
-                {_.isEmpty(recordedTextList) ? null : (
-                    <div className="flex flex-row items-start text-sm">
-                        <div className="flex w-16">{`用户`} :</div>
-                        <div className="flex flex-1">{_.map(recordedTextList, 'text').join(', ') || ''}</div>
-                    </div>
-                )}
-            </div>
-        </div>
+        </>
     )
 }
 
@@ -410,12 +427,19 @@ const helperPauseMic = async (recognizer: Record<string, any>) => {
     recognizer.stopContinuousRecognitionAsync()
 }
 
-const helperTts = async (
-    inputText: string,
-    stateSpeechConfig: any,
-    speechToken?: SpeechToken,
+const helperTts = async ({
+    inputText,
+    stateSpeechConfig,
+    voiceName,
+    speechToken,
+    callback,
+}: {
+    inputText: string
+    stateSpeechConfig: any
+    voiceName?: string
+    speechToken?: SpeechToken
     callback?: (synthesizer: any) => void
-) => {
+}) => {
     if (!speechToken?.authToken || !speechToken?.region) {
         alert(`no speechToken`)
         return
@@ -432,7 +456,7 @@ const helperTts = async (
                 speechToken?.region || ``
             )
             // speechConfig.speechSynthesisLanguage = 'zh-CN' // 'wuu-CN' //
-            speechConfig.speechSynthesisVoiceName = `zh-CN-XiaoxiaoMultilingualNeural` // `en-US-OnyxMultilingualNeural` // 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
+            speechConfig.speechSynthesisVoiceName = voiceName || `zh-CN-XiaoxiaoMultilingualNeural` // `en-US-OnyxMultilingualNeural` // 'zh-CN-XiaoxiaoMultilingualNeural' // 'wuu-CN-XiaotongNeural' //
 
             typeof callback === 'function' && callback(speechConfig)
         } else {
