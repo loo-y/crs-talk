@@ -184,7 +184,15 @@ export default function SpeechText({}: {}) {
                                 // 用于通知结束
                                 handlePlayAudio(text)
                             } else {
-                                streamText += text
+                                if (/^[a-zA-Z]/.test(text) && /[a-zA-Z]$/.test(text)) {
+                                    streamText += ` ${text} `
+                                } else if (/^[a-zA-Z]/.test(text)) {
+                                    streamText += ` ${text}`
+                                } else if (/[a-zA-Z]$/.test(text)) {
+                                    streamText += `${text} `
+                                } else {
+                                    streamText += text
+                                }
                                 // if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
                                 //     handlePlayAudio(streamText)
                                 //     streamText = ''
