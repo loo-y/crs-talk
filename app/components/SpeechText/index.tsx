@@ -7,7 +7,7 @@ import type { SpeechToken } from '@/shared/interface'
 import { recordingIdleGap } from '@/shared/constants'
 import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
 import AudioVisualizer from '../AudioVisualizer'
-import TextVisualizer from '../TextVisualizer'
+import TextVisualizer from '../AudioVisualizer/TextVisualizer'
 import CssVisualizer from '../AudioVisualizer/CssVisualizer'
 
 const textAudioPlayQueue: string[] = []
