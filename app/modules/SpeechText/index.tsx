@@ -22,7 +22,7 @@ export default function SpeechText({}: {}) {
         {
             role: 'system',
             content:
-                '你现在是我的朋友，我们正在饭后聊天，请用尽量简短和轻松的语气和我对话，并且请不要在对话中让人发现你是AI，不要出现emoji，尽量使用中文回答。',
+                '你现在是我的朋友，我们正在愉快聊天，对话保持简短，并且使用轻松的语气和我对话。请不要在对话中让人发现你是AI，不要出现emoji，尽量使用中文回答。',
         },
     ])
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
