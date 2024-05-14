@@ -21,6 +21,8 @@ export const getGraphqlAIMashupBody = ({
     ernieParams,
     queryOpenAI,
     openAIParams,
+    queryWorkersAI,
+    workersAIParams,
     queryLingyiwanwu,
     lingyiwanwuParams,
 }: IGrahpqlAIFetchProps & { name?: string }) => {
@@ -109,6 +111,16 @@ export const getGraphqlAIMashupBody = ({
             variables.openAIParams = openAIParams
         }
         queryList.push(isStream ? `OpenaiStream${paramsOpenAI}@stream` : `Openai ${paramsOpenAI} {text}`)
+    }
+    if (queryWorkersAI) {
+        let paramsWorkersAI = '',
+            hasWorkersAIArgs = workersAIParams
+        if (hasWorkersAIArgs) {
+            paramsList.push(`$workersAIParams: WorkersAIArgs`)
+            paramsWorkersAI = '(params: $workersAIParams)'
+            variables.workersAIParams = workersAIParams
+        }
+        queryList.push(isStream ? `WorkersAIStream${paramsWorkersAI}@stream` : `WorkersAI ${paramsWorkersAI} {text}`)
     }
     if (queryLingyiwanwu) {
         let paramsLingyiwanwu = '',

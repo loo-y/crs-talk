@@ -25,6 +25,8 @@ export interface IGrahpqlAIFetchProps {
     ernieParams?: Record<string, any>
     queryOpenAI?: boolean
     openAIParams?: Record<string, any>
+    queryWorkersAI?: boolean
+    workersAIParams?: Record<string, any>
     queryLingyiwanwu?: boolean
     lingyiwanwuParams?: Record<string, any>
     streamHandler?: (data: any) => void

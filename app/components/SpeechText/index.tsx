@@ -21,7 +21,7 @@ export default function SpeechText({}: {}) {
         {
             role: 'system',
             content:
-                '你现在是我的朋友，我们正在饭后聊天，请用尽量简短和轻松的语气和我对话，并且请不要在对话中让人发现你是AI，不要出现emoji',
+                '你现在是我的朋友，我们正在饭后聊天，请用尽量简短和轻松的语气和我对话，并且请不要在对话中让人发现你是AI，不要出现emoji，尽量使用中文回答。',
         },
     ])
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
@@ -568,17 +568,21 @@ const helperGetAIResponse = async ({
         fetchAIGraphqlStream({
             messages,
             isStream: true,
-            queryOpenAI: true,
-            openAIParams: {
-                baseUrl: 'https://api.deepseek.com/v1/',
-                model: 'deepseek-chat',
-                // model: 'qwen:7b',
-                // model: "llama3",
-                // model: 'phi3:3.8b-mini-instruct-4k-fp16',
-                // model: 'hfl/llama-3-chinese-8b-instruct-gguf',
-                // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
-                // apiKey: 'lm-studio',
-            },
+            queryWorkersAI: true,
+            // workersAIParams: {
+
+            // },
+            // queryOpenAI: true,
+            // openAIParams: {
+            // baseUrl: 'https://api.deepseek.com/v1/',
+            // model: 'deepseek-chat',
+            // model: 'qwen:7b',
+            // model: "llama3",
+            // model: 'phi3:3.8b-mini-instruct-4k-fp16',
+            // model: 'hfl/llama-3-chinese-8b-instruct-gguf',
+            // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
+            // apiKey: 'lm-studio',
+            // },
             // queryMoonshot: true,
             // queryGroq: true,
             maxTokens: 200,
