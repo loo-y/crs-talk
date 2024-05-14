@@ -33,7 +33,7 @@ export default function SpeechText({}: {}) {
     const [stateTTSSpeechConfig, setStateTTSSpeechConfig] = useState<Record<string, any>>()
     const [speechTokenOpenAI, setSpeechTokenOpenAI] = useState<SpeechToken>()
     const talkMessageListRef = useRef<HTMLDivElement>(null)
-    const [selectVoice, setSelectVoice] = useState<Record<string, any>>({})
+    const [selectedVoice, setSelectedVoice] = useState<Record<string, any>>({})
 
     let recordingIdleTimer: any = null
     const handleRecording = (speechRecognitionResult: Record<string, any>) => {
@@ -96,7 +96,7 @@ export default function SpeechText({}: {}) {
         }
     }, [talkMessageList, recordedTextList])
 
-    const handlePlayAudio = async (text: string) => {
+    const handlePlayAudio = async (text: string, voiceItem: Record<string, any>) => {
         textAudioPlayQueue.push(text)
 
         if (streamInQueuePlaying) {
@@ -118,9 +118,9 @@ export default function SpeechText({}: {}) {
                 await helperTts({
                     inputText: textPlay,
                     stateSpeechConfig: stateTTSSpeechConfig,
-                    voiceName: selectVoice?.value || undefined,
+                    voiceName: voiceItem?.value || undefined,
                     speechToken:
-                        speechTokenOpenAI?.authToken && selectVoice?.value && selectVoice?.isOpenai
+                        speechTokenOpenAI?.authToken && voiceItem?.value && voiceItem?.isOpenai
                             ? speechTokenOpenAI
                             : speechToken,
                     callback: speechConfig => {
@@ -189,11 +189,11 @@ export default function SpeechText({}: {}) {
                         if (text) {
                             if (text == `__{{streamCompleted}}__`) {
                                 if (streamText) {
-                                    handlePlayAudio(streamText)
+                                    handlePlayAudio(streamText, selectedVoice)
                                 }
 
                                 // 用于通知结束
-                                handlePlayAudio(text)
+                                handlePlayAudio(text, selectedVoice)
                             } else {
                                 let fixedText = text
                                 if (/^[a-zA-Z]/.test(text) && /[a-zA-Z]$/.test(text)) {
@@ -263,7 +263,7 @@ export default function SpeechText({}: {}) {
 
     const handleOnVoicePick = (voice: Record<string, any>) => {
         console.log(`handleOnVoicePick`, voice)
-        setSelectVoice(voice)
+        setSelectedVoice(voice)
     }
     const handleTestTTS = () => {
         let streamText = ''
@@ -276,11 +276,11 @@ export default function SpeechText({}: {}) {
                 if (text) {
                     if (text == `__{{streamCompleted}}__`) {
                         if (streamText) {
-                            handlePlayAudio(streamText)
+                            handlePlayAudio(streamText, selectedVoice)
                         }
 
                         // 用于通知结束
-                        handlePlayAudio(text)
+                        handlePlayAudio(text, selectedVoice)
                     } else {
                         streamText += text
                         // if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
