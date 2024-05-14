@@ -2,7 +2,7 @@
 import { useEffect } from 'react'
 import { useMainStore } from './providers'
 import { MainStoreProvider } from './providers'
-import SpeechText from '@/components/SpeechText'
+import SpeechText from '../../../modules/SpeechText'
 const Main = () => {
     const { isloading, updateIsLoading } = useMainStore(state => state)
     useEffect(() => {
