@@ -8,6 +8,7 @@ import { recordingIdleGap } from '@/shared/constants'
 import * as SpeechSDK from 'microsoft-cognitiveservices-speech-sdk'
 import AudioVisualizer from '../AudioVisualizer'
 import TextVisualizer from '../TextVisualizer'
+import CssVisualizer from '../AudioVisualizer/CssVisualizer'
 
 const textAudioPlayQueue: string[] = []
 let streamInQueuePlaying = false
@@ -87,7 +88,7 @@ export default function SpeechText({}: {}) {
         if (talkMessageListDiv) {
             talkMessageListDiv.scrollTo(0, talkMessageListDiv.scrollHeight)
         }
-    }, [talkMessageList])
+    }, [talkMessageList, recordedTextList])
 
     const handlePlayAudio = async (text: string) => {
         textAudioPlayQueue.push(text)
@@ -184,15 +185,17 @@ export default function SpeechText({}: {}) {
                                 // 用于通知结束
                                 handlePlayAudio(text)
                             } else {
+                                let fixedText = text
                                 if (/^[a-zA-Z]/.test(text) && /[a-zA-Z]$/.test(text)) {
-                                    streamText += ` ${text} `
+                                    fixedText = ` ${text} `
                                 } else if (/^[a-zA-Z]/.test(text)) {
-                                    streamText += ` ${text}`
+                                    fixedText = ` ${text}`
                                 } else if (/[a-zA-Z]$/.test(text)) {
-                                    streamText += `${text} `
-                                } else {
-                                    streamText += text
+                                    fixedText = `${text} `
                                 }
+
+                                streamText += fixedText
+
                                 // if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
                                 //     handlePlayAudio(streamText)
                                 //     streamText = ''
@@ -200,7 +203,7 @@ export default function SpeechText({}: {}) {
                                 setTalkMessageList(talkMessageList => {
                                     if (talkMessageList?.at(-1)?.role === 'assistant') {
                                         const newList = [...talkMessageList]
-                                        newList!.at(-1)!.content += text
+                                        newList!.at(-1)!.content += fixedText
                                         return newList
                                     } else {
                                         return [...talkMessageList, { role: 'assistant', content: text }]
@@ -294,7 +297,8 @@ export default function SpeechText({}: {}) {
                         </div>
                     )
                 })} */}
-                <AudioVisualizer isMicOn={isRecording || false} />
+                <CssVisualizer isMicOn={isRecording || false} />
+                {/* <AudioVisualizer isMicOn={isRecording || false} /> */}
                 {/* <TextVisualizer textSpeed={textSpeed} /> */}
             </div>
             <div className="flex functional flex-row justify-between items-center">
@@ -568,25 +572,19 @@ const helperGetAIResponse = async ({
         fetchAIGraphqlStream({
             messages,
             isStream: true,
-
-            queryWorkersAI: true,
-            workersAIParams: {
-                model: '@cf/qwen/qwen1.5-7b-chat-awq',
-            },
-            // queryOpenAI: true,
-            // openAIParams: {
-            // baseUrl: 'https://api.deepseek.com/v1/',
-            // model: 'deepseek-chat',
-            // model: 'qwen:7b',
-            // model: "llama3",
-            // model: 'phi3:3.8b-mini-instruct-4k-fp16',
-            // model: 'hfl/llama-3-chinese-8b-instruct-gguf',
-            // model: "microsoft/Phi-3-mini-4k-instruct-gguf",
-            // apiKey: 'lm-studio',
+            // queryWorkersAI: true,
+            // workersAIParams: {
+            //     // model: '@cf/qwen/qwen1.5-7b-chat-awq',
+            //     // model: `@cf/google/gemma-7b-it-lora`,
             // },
+            queryOpenAI: true,
+            openAIParams: {
+                baseUrl: 'https://api.deepseek.com/v1/',
+                model: 'deepseek-chat',
+            },
             // queryMoonshot: true,
             // queryGroq: true,
-            maxTokens: 200,
+            maxTokens: 100,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
                 console.log('streamHandler', streamResult)
                 const { data } = streamResult || {}
