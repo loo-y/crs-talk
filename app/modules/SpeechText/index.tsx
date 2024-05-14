@@ -10,6 +10,8 @@ import AudioVisualizer from '../AudioVisualizer'
 import TextVisualizer from '../AudioVisualizer/TextVisualizer'
 import CssVisualizer from '../AudioVisualizer/CssVisualizer'
 import VoicePick from '../VoicePick'
+import { Toaster } from '@/components/ui/sonner'
+import { toast } from 'sonner'
 
 const textAudioPlayQueue: string[] = []
 let streamInQueuePlaying = false
@@ -65,6 +67,7 @@ export default function SpeechText({}: {}) {
                         authToken,
                         region,
                     })
+                    toast('获取 Azure Token 成功')
                 }
             }
             syncSpeechToken()
@@ -79,6 +82,7 @@ export default function SpeechText({}: {}) {
                         authToken,
                         region,
                     })
+                    toast('获取 OpenAI Token 成功')
                 }
             }
             syncSpeechToken()
@@ -365,6 +369,7 @@ export default function SpeechText({}: {}) {
                     )}
                 </div>
             </div>
+            <Toaster />
         </>
     )
 }
