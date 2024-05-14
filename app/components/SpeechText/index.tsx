@@ -568,10 +568,11 @@ const helperGetAIResponse = async ({
         fetchAIGraphqlStream({
             messages,
             isStream: true,
-            queryWorkersAI: true,
-            // workersAIParams: {
 
-            // },
+            queryWorkersAI: true,
+            workersAIParams: {
+                model: '@cf/qwen/qwen1.5-7b-chat-awq',
+            },
             // queryOpenAI: true,
             // openAIParams: {
             // baseUrl: 'https://api.deepseek.com/v1/',
