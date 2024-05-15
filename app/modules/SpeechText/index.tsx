@@ -601,17 +601,17 @@ const helperGetAIResponse = async ({
         fetchAIGraphqlStream({
             messages,
             isStream: true,
-            queryMoonshot: true,
+            // queryMoonshot: true,
             // queryWorkersAI: true,
             // workersAIParams: {
             //     model: '@cf/qwen/qwen1.5-7b-chat-awq',
             //     // model: `@hf/thebloke/neural-chat-7b-v3-1-awq`,
             // },
-            // queryOpenAI: true,
-            // openAIParams: {
-            //     baseUrl: 'https://api.deepseek.com/v1/',
-            //     model: 'deepseek-chat',
-            // },
+            queryOpenAI: true,
+            openAIParams: {
+                baseUrl: `https://openrouter.ai/api/v1`, // 'https://api.deepseek.com/v1/',
+                model: `openai/gpt-4o`, // 'deepseek-chat',
+            },
             // queryMoonshot: true,
             // queryGroq: true,
             maxTokens: 100,
