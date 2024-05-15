@@ -25,7 +25,7 @@ export default function SpeechText({}: {}) {
         {
             role: 'system',
             content:
-                '你现在是我的朋友，我们正在愉快聊天，对话保持简短，并且使用轻松的语气和我对话。请不要在对话中让人发现你是AI，不要出现emoji，尽量使用中文回答。',
+                '你是一个心理咨询师，也是我的朋友，我们正在愉快聊天。对话轻松且简短。注意：使用中文进行对话，不要在对话中让人发现你是AI，不要出现emoji。',
         },
     ])
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
@@ -601,16 +601,16 @@ const helperGetAIResponse = async ({
         fetchAIGraphqlStream({
             messages,
             isStream: true,
-            // queryWorkersAI: true,
-            // workersAIParams: {
-            //     // model: '@cf/qwen/qwen1.5-7b-chat-awq',
-            //     // model: `@cf/google/gemma-7b-it-lora`,
-            // },
-            queryOpenAI: true,
-            openAIParams: {
-                baseUrl: 'https://api.deepseek.com/v1/',
-                model: 'deepseek-chat',
+            queryWorkersAI: true,
+            workersAIParams: {
+                // model: '@cf/qwen/qwen1.5-7b-chat-awq',
+                model: `@hf/meta-llama/meta-llama-3-8b-instruct`,
             },
+            // queryOpenAI: true,
+            // openAIParams: {
+            //     baseUrl: 'https://api.deepseek.com/v1/',
+            //     model: 'deepseek-chat',
+            // },
             // queryMoonshot: true,
             // queryGroq: true,
             maxTokens: 100,
