@@ -1,5 +1,6 @@
 import _ from 'lodash'
 import { NextRequest, NextResponse } from 'next/server'
+import { headers } from 'next/headers'
 // import * as dotenv from 'dotenv'
 // dotenv.config()
 
@@ -13,6 +14,7 @@ const { AZURE_SPEECH_KEY_S0: azureSpeechKey = '', AZURE_SPEECH_REGION_S0: azureS
 // https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/language-support?tabs=stt#speech-to-text
 
 export async function GET(request: NextRequest) {
+    const headersList = headers()
     let response
     if (
         !azureSpeechKey ||
@@ -28,6 +30,9 @@ export async function GET(request: NextRequest) {
                 'Ocp-Apim-Subscription-Key': azureSpeechKey,
                 // 'Content-Type': 'application/x-www-form-urlencoded',
                 'Content-Type': 'application/json',
+                'User-Agent': headersList.get('user-agent') || '',
+                Cookie: headersList.get('cookie') || '',
+                Origin: headersList.get('host') ? `https://${headersList.get('host')}/` : '',
             },
             body: null,
         }

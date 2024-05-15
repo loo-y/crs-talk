@@ -16,7 +16,12 @@ const { AZURE_SPEECH_KEY: azureSpeechKey = '', AZURE_SPEECH_REGION: azureSpeechr
 export async function GET(request: NextRequest) {
     const headersList = headers()
     let response
-    if (azureSpeechKey === 'paste-your-speech-key-here' || azureSpeechregion === 'paste-your-speech-region-here') {
+    if (
+        !azureSpeechKey ||
+        !azureSpeechregion ||
+        azureSpeechKey === 'paste-your-speech-key-here' ||
+        azureSpeechregion === 'paste-your-speech-region-here'
+    ) {
         response = NextResponse.json({ error: `auth failed`, status: false }, { status: 400 })
     } else {
         const params = {
