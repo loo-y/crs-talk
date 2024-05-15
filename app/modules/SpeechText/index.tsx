@@ -603,8 +603,8 @@ const helperGetAIResponse = async ({
             isStream: true,
             queryWorkersAI: true,
             workersAIParams: {
-                // model: '@cf/qwen/qwen1.5-7b-chat-awq',
-                model: `@hf/thebloke/neural-chat-7b-v3-1-awq`,
+                model: '@cf/qwen/qwen1.5-7b-chat-awq',
+                // model: `@hf/thebloke/neural-chat-7b-v3-1-awq`,
             },
             // queryOpenAI: true,
             // openAIParams: {
