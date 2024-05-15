@@ -601,11 +601,12 @@ const helperGetAIResponse = async ({
         fetchAIGraphqlStream({
             messages,
             isStream: true,
-            queryWorkersAI: true,
-            workersAIParams: {
-                model: '@cf/qwen/qwen1.5-7b-chat-awq',
-                // model: `@hf/thebloke/neural-chat-7b-v3-1-awq`,
-            },
+            queryMoonshot: true,
+            // queryWorkersAI: true,
+            // workersAIParams: {
+            //     model: '@cf/qwen/qwen1.5-7b-chat-awq',
+            //     // model: `@hf/thebloke/neural-chat-7b-v3-1-awq`,
+            // },
             // queryOpenAI: true,
             // openAIParams: {
             //     baseUrl: 'https://api.deepseek.com/v1/',
