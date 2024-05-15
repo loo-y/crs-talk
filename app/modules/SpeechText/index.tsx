@@ -96,42 +96,46 @@ export default function SpeechText({}: {}) {
         }
     }, [talkMessageList, recordedTextList])
 
-    const handlePlayAudio = async (text: string, voiceItem: Record<string, any>) => {
-        textAudioPlayQueue.push(text)
+    const handlePlayAudio = useCallback(
+        async (text: string, voiceItem?: Record<string, any>) => {
+            textAudioPlayQueue.push(text)
 
-        if (streamInQueuePlaying) {
-            return
-        }
+            if (streamInQueuePlaying) {
+                return
+            }
+            voiceItem = voiceItem || selectedVoice
 
-        // setStreamInQueuePlaying(true)
-        streamInQueuePlaying = true
-        while (textAudioPlayQueue.length) {
-            const textPlay = textAudioPlayQueue.shift()
-            if (textPlay == `__{{streamCompleted}}__`) {
-                // setStreamInQueuePlaying(false)
-                streamInQueuePlaying = false
-                talkStart && updateIsRecording(true)
-                break
+            // setStreamInQueuePlaying(true)
+            streamInQueuePlaying = true
+            while (textAudioPlayQueue.length) {
+                const textPlay = textAudioPlayQueue.shift()
+                if (textPlay == `__{{streamCompleted}}__`) {
+                    // setStreamInQueuePlaying(false)
+                    streamInQueuePlaying = false
+                    talkStart && updateIsRecording(true)
+                    break
+                }
+                if (textPlay) {
+                    // console.log(`speechTokenOpenAI?.authToken`, speechTokenOpenAI, speechToken, speechTokenOpenAI?.authToken ? speechTokenOpenAI : speechToken)
+                    await helperTts({
+                        inputText: textPlay,
+                        stateSpeechConfig: stateTTSSpeechConfig,
+                        voiceName: voiceItem?.value || undefined,
+                        speechToken:
+                            speechTokenOpenAI?.authToken && voiceItem?.value && voiceItem?.isOpenai
+                                ? speechTokenOpenAI
+                                : speechToken,
+                        callback: speechConfig => {
+                            setStateTTSSpeechConfig(speechConfig)
+                        },
+                    })
+                }
             }
-            if (textPlay) {
-                // console.log(`speechTokenOpenAI?.authToken`, speechTokenOpenAI, speechToken, speechTokenOpenAI?.authToken ? speechTokenOpenAI : speechToken)
-                await helperTts({
-                    inputText: textPlay,
-                    stateSpeechConfig: stateTTSSpeechConfig,
-                    voiceName: voiceItem?.value || undefined,
-                    speechToken:
-                        speechTokenOpenAI?.authToken && voiceItem?.value && voiceItem?.isOpenai
-                            ? speechTokenOpenAI
-                            : speechToken,
-                    callback: speechConfig => {
-                        setStateTTSSpeechConfig(speechConfig)
-                    },
-                })
-            }
-        }
-        // setStreamInQueuePlaying(false)
-        streamInQueuePlaying = false
-    }
+            // setStreamInQueuePlaying(false)
+            streamInQueuePlaying = false
+        },
+        [selectedVoice]
+    )
 
     useEffect(() => {
         if (isRecording) {
@@ -189,11 +193,11 @@ export default function SpeechText({}: {}) {
                         if (text) {
                             if (text == `__{{streamCompleted}}__`) {
                                 if (streamText) {
-                                    handlePlayAudio(streamText, selectedVoice)
+                                    handlePlayAudio(streamText)
                                 }
 
                                 // 用于通知结束
-                                handlePlayAudio(text, selectedVoice)
+                                handlePlayAudio(text)
                             } else {
                                 let fixedText = text
                                 if (/^[a-zA-Z]/.test(text) && /[a-zA-Z]$/.test(text)) {
@@ -276,11 +280,11 @@ export default function SpeechText({}: {}) {
                 if (text) {
                     if (text == `__{{streamCompleted}}__`) {
                         if (streamText) {
-                            handlePlayAudio(streamText, selectedVoice)
+                            handlePlayAudio(streamText)
                         }
 
                         // 用于通知结束
-                        handlePlayAudio(text, selectedVoice)
+                        handlePlayAudio(text)
                     } else {
                         streamText += text
                         // if (['。', '!', '?', '！', '？'].includes(text.slice(-1))) {
