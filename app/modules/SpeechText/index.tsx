@@ -97,13 +97,13 @@ export default function SpeechText({}: {}) {
     }, [talkMessageList, recordedTextList])
 
     const handlePlayAudio = useCallback(
-        async (text: string, voiceItem?: Record<string, any>) => {
+        async (text: string) => {
             textAudioPlayQueue.push(text)
 
             if (streamInQueuePlaying) {
                 return
             }
-            voiceItem = voiceItem || selectedVoice
+            const voiceItem = selectedVoice
 
             // setStreamInQueuePlaying(true)
             streamInQueuePlaying = true
