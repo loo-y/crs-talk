@@ -89,7 +89,7 @@ const CssVisualizer = ({ isMicOn }: { isMicOn: boolean }) => {
                     __analyzer__.getByteFrequencyData(data as Uint8Array)
 
                     let modefiedData = data[0]
-                    const voice = modefiedData / 2000
+                    const voice = modefiedData / 1200
                     setCurrentVoice(1 + voice)
 
                     requestAnimationFrame(render)
