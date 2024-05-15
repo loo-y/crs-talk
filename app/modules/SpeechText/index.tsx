@@ -604,7 +604,7 @@ const helperGetAIResponse = async ({
             queryWorkersAI: true,
             workersAIParams: {
                 // model: '@cf/qwen/qwen1.5-7b-chat-awq',
-                model: `@hf/meta-llama/meta-llama-3-8b-instruct`,
+                model: `@hf/thebloke/neural-chat-7b-v3-1-awq`,
             },
             // queryOpenAI: true,
             // openAIParams: {
