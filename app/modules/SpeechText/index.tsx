@@ -615,7 +615,7 @@ const helperGetAIResponse = async ({
             },
             // queryMoonshot: true,
             // queryGroq: true,
-            maxTokens: 120,
+            maxTokens: 200,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
                 console.log('streamHandler', streamResult)
                 const { data } = streamResult || {}
