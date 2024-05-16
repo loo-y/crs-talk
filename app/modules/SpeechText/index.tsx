@@ -62,21 +62,22 @@ export default function SpeechText({}: {}) {
         console.log(`recognitionResult`, recognitionResult, recognitionResult.item)
         const { isFinal } = recognitionResult || {}
         const item = recognitionResult[0]
-        if (item?.transcript?.length) {
-            setRecordedTextList(recordedTextList => {
-                const indexCurrent = isFinal ? -1 : recordedTextList?.length ? recordedTextList.length - 1 : -1
-                if (indexCurrent > -1) {
-                    recordedTextList[indexCurrent].text = item?.transcript || ''
-                    return [...recordedTextList]
-                } else {
-                    return [...recordedTextList, { offset: String(Date.now()), text: item?.transcript || '' }]
-                }
-            })
-        }
-
         if (!isFinal) {
+            if (item?.transcript?.length) {
+                setRecordedTextList(recordedTextList => {
+                    const indexCurrent = recordedTextList?.length ? recordedTextList.length - 1 : -1
+                    if (indexCurrent > -1) {
+                        recordedTextList[indexCurrent].text = item?.transcript || ''
+                        return [...recordedTextList]
+                    } else {
+                        return [...recordedTextList, { offset: String(Date.now()), text: item?.transcript || '' }]
+                    }
+                })
+            }
+
             clearTimeout(recordingIdleTimer)
         }
+
         recordingIdleTimer = setTimeout(() => {
             updateIsRecording(false)
         }, recordingIdleGap)
