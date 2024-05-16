@@ -611,7 +611,7 @@ const helperGetAIResponse = async ({
             queryOpenAI: true,
             openAIParams: {
                 baseUrl: `https://openrouter.ai/api/v1`, // 'https://api.deepseek.com/v1/',
-                model: `meta-llama/llama-3-8b-instruct:free`, // `meta-llama/llama-3-8b-instruct:free`, // `google/gemini-flash-1.5`, // `openai/gpt-4o`, // 'deepseek-chat',
+                model: `google/gemini-flash-1.5`, // `meta-llama/llama-3-8b-instruct:free`, // `google/gemini-flash-1.5`, // `openai/gpt-4o`, // 'deepseek-chat',
             },
             // queryMoonshot: true,
             // queryGroq: true,
