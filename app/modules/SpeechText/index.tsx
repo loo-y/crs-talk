@@ -142,35 +142,35 @@ export default function SpeechText({}: {}) {
                     if (authToken && region) {
                         updateSpeechToken({ authToken, region })
                         talkStart &&
-                            helperSttFromMic(
+                            helperSttByNativeWebAPI({
                                 stateRecognizer,
-                                { authToken, region },
-                                handleRecording,
-                                (recognizer: Record<string, any>) => {
+                                // speechToken: { authToken, region },
+                                recording: handleRecording,
+                                callback: (recognizer: Record<string, any>) => {
                                     if (recognizer) {
                                         setStateRecognizer(recognizer)
                                     }
-                                }
-                            )
+                                },
+                            })
                     }
                 }
                 // console.log(`speechToken`, speechToken)
                 syncSpeechToken()
             } else {
                 talkStart &&
-                    helperSttFromMic(
+                    helperSttByNativeWebAPI({
                         stateRecognizer,
-                        speechToken || {},
-                        handleRecording,
-                        (recognizer: Record<string, any>) => {
+                        // speechToken: speechToken || {},
+                        recording: handleRecording,
+                        callback: (recognizer: Record<string, any>) => {
                             if (recognizer) {
                                 setStateRecognizer(recognizer)
                             }
-                        }
-                    )
+                        },
+                    })
             }
         } else if (stateRecognizer) {
-            helperPauseMic(stateRecognizer)
+            helperPauseSttByNativeWebAPI(stateRecognizer)
             if (talkStart) {
                 const userContent = _.map(recordedTextList, 'text').join(', ')
                 const newMessageList = [...talkMessageList, { role: 'user', content: userContent }] as {
@@ -375,6 +375,47 @@ export default function SpeechText({}: {}) {
     )
 }
 
+const helperSttByNativeWebAPI = async ({
+    stateRecognizer,
+    recording,
+    callback,
+}: {
+    stateRecognizer: any
+    recording: (arg: any) => void
+    callback?: (arg?: any) => void
+}) => {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition
+    const SpeechGrammarList = window.SpeechGrammarList || window.webkitSpeechGrammarList
+    const SpeechRecognitionEvent = window.SpeechRecognitionEvent || window.webkitSpeechRecognitionEvent
+    if (!SpeechRecognition) {
+        alert(`your browser does not support speech`)
+        return
+    }
+    let recognition
+    if (stateRecognizer) {
+        recognition = stateRecognizer
+        recognition.start()
+        return
+    }
+    recognition = new SpeechRecognition()
+    callback && callback(recognition)
+    recognition.continuous = true // 持续监听
+    recognition.interimResults = true // 获取临时结果
+    recognition.maxAlternatives = 1
+    recognition.lang = 'zh-CN'
+    recognition.onresult = (event: any) => {
+        if (!event?.result?.length) return
+        const result = event.results.at(-1)?.[0]?.transcript
+        console.log(`transcript`, result)
+        recording(result)
+    }
+    recognition.start()
+}
+
+const helperPauseSttByNativeWebAPI = async (recognizer: Record<string, any>) => {
+    recognizer.stop()
+}
+
 const helperGetSpeechTokenAsync = async (isOpenAI?: boolean): Promise<{ authToken?: string; region?: string }> => {
     const response = await fetchTokenOrRefresh(isOpenAI)
     const { status, authToken, region } = response || {}
@@ -387,12 +428,17 @@ const helperGetSpeechTokenAsync = async (isOpenAI?: boolean): Promise<{ authToke
     return {}
 }
 
-const helperSttFromMic = async (
-    stateRecognizer: any,
-    speechToken: SpeechToken,
-    recording: (arg: any) => void,
+const helperSttFromMic = async ({
+    stateRecognizer,
+    speechToken,
+    recording,
+    callback,
+}: {
+    stateRecognizer: any
+    speechToken: SpeechToken
+    recording: (arg: any) => void
     callback?: (arg?: any) => void
-) => {
+}) => {
     if (!speechToken?.authToken || !speechToken?.region) {
         alert(`Please get speech token first`)
         return
