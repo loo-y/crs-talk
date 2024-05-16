@@ -58,6 +58,30 @@ export default function SpeechText({}: {}) {
         }, recordingIdleGap)
     }
 
+    const handleRecordingByNativeSpeech = (recognitionResult: Record<string, any>) => {
+        console.log(`recognitionResult`, recognitionResult, recognitionResult.item)
+        const { isFinal } = recognitionResult || {}
+        const item = recognitionResult[0]
+        if (item?.transcript?.length) {
+            setRecordedTextList(recordedTextList => {
+                const indexCurrent = isFinal ? -1 : recordedTextList?.length ? recordedTextList.length - 1 : -1
+                if (indexCurrent > -1) {
+                    recordedTextList[indexCurrent].text = item?.transcript || ''
+                    return [...recordedTextList]
+                } else {
+                    return [...recordedTextList, { offset: String(Date.now()), text: item?.transcript || '' }]
+                }
+            })
+        }
+
+        if (!isFinal) {
+            clearTimeout(recordingIdleTimer)
+        }
+        recordingIdleTimer = setTimeout(() => {
+            updateIsRecording(false)
+        }, recordingIdleGap)
+    }
+
     useEffect(() => {
         if (!speechToken) {
             const syncSpeechToken = async () => {
@@ -142,10 +166,11 @@ export default function SpeechText({}: {}) {
                     if (authToken && region) {
                         updateSpeechToken({ authToken, region })
                         talkStart &&
-                            helperSttByNativeWebAPI({
+                            helperSttByNativeSpeech({
                                 stateRecognizer,
                                 // speechToken: { authToken, region },
-                                recording: handleRecording,
+                                // recording: handleRecording,
+                                recording: handleRecordingByNativeSpeech,
                                 callback: (recognizer: Record<string, any>) => {
                                     if (recognizer) {
                                         setStateRecognizer(recognizer)
@@ -158,10 +183,11 @@ export default function SpeechText({}: {}) {
                 syncSpeechToken()
             } else {
                 talkStart &&
-                    helperSttByNativeWebAPI({
+                    helperSttByNativeSpeech({
                         stateRecognizer,
                         // speechToken: speechToken || {},
-                        recording: handleRecording,
+                        // recording: handleRecording,
+                        recording: handleRecordingByNativeSpeech,
                         callback: (recognizer: Record<string, any>) => {
                             if (recognizer) {
                                 setStateRecognizer(recognizer)
@@ -170,7 +196,7 @@ export default function SpeechText({}: {}) {
                     })
             }
         } else if (stateRecognizer) {
-            helperPauseSttByNativeWebAPI(stateRecognizer)
+            helperPauseSttByNativeSpeech(stateRecognizer)
             if (talkStart) {
                 const userContent = _.map(recordedTextList, 'text').join(', ')
                 const newMessageList = [...talkMessageList, { role: 'user', content: userContent }] as {
@@ -375,7 +401,7 @@ export default function SpeechText({}: {}) {
     )
 }
 
-const helperSttByNativeWebAPI = async ({
+const helperSttByNativeSpeech = async ({
     stateRecognizer,
     recording,
     callback,
@@ -398,21 +424,20 @@ const helperSttByNativeWebAPI = async ({
         return
     }
     recognition = new SpeechRecognition()
-    callback && callback(recognition)
     recognition.continuous = true // 持续监听
     recognition.interimResults = true // 获取临时结果
     recognition.maxAlternatives = 1
     recognition.lang = 'zh-CN'
     recognition.onresult = (event: any) => {
-        if (!event?.result?.length) return
-        const result = event.results.at(-1)?.[0]?.transcript
-        console.log(`transcript`, result)
-        recording(result)
+        if (!event?.results?.length) return
+        const result = event.results[event.results.length - 1]?.[0]?.transcript
+        recording(event.results[event.results.length - 1])
     }
     recognition.start()
+    callback && callback(recognition)
 }
 
-const helperPauseSttByNativeWebAPI = async (recognizer: Record<string, any>) => {
+const helperPauseSttByNativeSpeech = async (recognizer: Record<string, any>) => {
     recognizer.stop()
 }
 
