@@ -12,6 +12,7 @@ import CssVisualizer from '../AudioVisualizer/CssVisualizer'
 import VoicePick from '../VoicePick'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
+import { jailbrokenDan, psychological } from '@/shared/prompts'
 
 const textAudioPlayQueue: string[] = []
 let streamInQueuePlaying = false
@@ -24,8 +25,7 @@ export default function SpeechText({}: {}) {
     >([
         {
             role: 'system',
-            content:
-                '你是一个心理咨询师，也是我的朋友，我们正在愉快聊天。对话轻松且简短。注意：使用中文进行对话，不要在对话中让人发现你是AI，不要出现emoji。',
+            content: jailbrokenDan,
         },
     ])
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
