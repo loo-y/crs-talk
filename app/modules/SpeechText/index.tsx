@@ -25,7 +25,7 @@ export default function SpeechText({}: {}) {
     >([
         {
             role: 'system',
-            content: jailbrokenDan,
+            content: psychological,
         },
     ])
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
@@ -683,11 +683,11 @@ const helperGetAIResponse = async ({
             queryOpenAI: true,
             openAIParams: {
                 baseUrl: `https://openrouter.ai/api/v1`, // 'https://api.deepseek.com/v1/',
-                model: `mistralai/mistral-7b-instruct`, // `meta-llama/llama-3-8b-instruct:free`, // `google/gemini-flash-1.5`, // `openai/gpt-4o`, // 'deepseek-chat', // `mistralai/mistral-7b-instruct`,
+                model: `openai/gpt-3.5-turbo`, // `meta-llama/llama-3-8b-instruct:free`, // `google/gemini-flash-1.5`, // `openai/gpt-4o`, // 'deepseek-chat', // `mistralai/mistral-7b-instruct`,
             },
             // queryMoonshot: true,
             // queryGroq: true,
-            maxTokens: 200,
+            maxTokens: 300,
             streamHandler: (streamResult: { data: string; status?: boolean }) => {
                 console.log('streamHandler', streamResult)
                 const { data } = streamResult || {}
