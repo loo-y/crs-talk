@@ -23,50 +23,48 @@ const CssVisualizer = ({ isMicOn, isSignle = true }: { isMicOn: boolean; isSignl
         // animationTimingFunction: 'cubic-bezier(0.550, 0.085, 0.680, 0.530)',
     }
 
-    // 内联 keyframes 对象
-    const keyframesStyles1 = `
-        @keyframes scale-animation {
-            0% {
-                transform: scale(${lastScale});
-                background-color: #000000;
-            }
-            50% {
-                transform: scale(${scale});
-                background-color: ${scale === 1 ? '#000' : '#111'};
-            }
-            75% {
-                transform: scale(${scale});
-                background-color: ${scale === 1 ? '#000' : '#0f0f0f'};
-            }
-            100% {
-                transform: scale(${scaleEnd});
-                background-color: #000000;
-            }
-        }
-    `
-
-    const keyframesStyles2 = `
-        @keyframes scale-animation {
-            0% {
-                border-radius: 50%;
-                transform: scale(1, 0.7);
-              }
-              50% {
-                border-radius: 50%;
-                transform: scale(1, ${scale});
-              }
-              100% {
-                border-radius: 50%;
-                transform: scale(1, 0.7);
-              }
-        }
-    `
-    // const keyframesStyles = keyframesStyles1
-    const [keyframesStyles, setKeyframesStyles] = useState(keyframesStyles1)
+    const [keyframesStyles, setKeyframesStyles] = useState('')
     useEffect(() => {
         if (isSignle) {
+            const keyframesStyles1 = `
+                @keyframes scale-animation {
+                    0% {
+                        transform: scale(${lastScale});
+                        background-color: #000000;
+                    }
+                    50% {
+                        transform: scale(${scale});
+                        background-color: ${scale === 1 ? '#000' : '#111'};
+                    }
+                    75% {
+                        transform: scale(${scale});
+                        background-color: ${scale === 1 ? '#000' : '#0f0f0f'};
+                    }
+                    100% {
+                        transform: scale(${scaleEnd});
+                        background-color: #000000;
+                    }
+                }
+            `
             setKeyframesStyles(keyframesStyles1)
         } else {
+            console.log(`scale====> ${scale}`)
+            const keyframesStyles2 = `
+                @keyframes scale-animation {
+                    0% {
+                        border-radius: 50%;
+                        transform: scale(1, 0.7);
+                    }
+                    50% {
+                        border-radius: 50%;
+                        transform: scale(1, ${scale});
+                    }
+                    100% {
+                        border-radius: 50%;
+                        transform: scale(1, 0.7);
+                    }
+                }
+            `
             setKeyframesStyles(keyframesStyles2)
         }
     }, [isSignle, scale])
@@ -100,10 +98,13 @@ const CssVisualizer = ({ isMicOn, isSignle = true }: { isMicOn: boolean; isSignl
             render = () => {
                 const data = new Uint8Array(__analyzer__.frequencyBinCount)
                 __analyzer__.getByteFrequencyData(data as Uint8Array)
-                console.log(`data`, data[0])
+                // console.log(`data`, data[0])
                 let modefiedData = data[0]
                 const voice = modefiedData / 1200
-                setCurrentVoice(1 + voice)
+                if (!isSignle) {
+                    console.log(`not isSignle`)
+                }
+                setCurrentVoice((isSignle ? 1 : 0.7) + voice)
                 requestAnimationFrame(render)
             }
             requestAnimationFrame(render)
@@ -116,7 +117,7 @@ const CssVisualizer = ({ isMicOn, isSignle = true }: { isMicOn: boolean; isSignl
                 mediaStream.getTracks().forEach(track => track.stop())
             }
         }
-    }, [mediaStream])
+    }, [mediaStream, isSignle])
 
     useEffect(() => {
         if (isMicOn) {
