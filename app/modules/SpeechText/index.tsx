@@ -28,6 +28,7 @@ export default function SpeechText({}: {}) {
             content: psychological,
         },
     ])
+    const [startTalk, setStartTalk] = useState(false)
     const [recordedTextList, setRecordedTextList] = useState<{ offset: string; text: string }[]>([])
     const [stateRecognizer, setStateRecognizer] = useState<Record<string, any>>()
     const [stateTTSSpeechConfig, setStateTTSSpeechConfig] = useState<Record<string, any>>()
@@ -135,7 +136,7 @@ export default function SpeechText({}: {}) {
             if (textPlay == `__{{streamCompleted}}__`) {
                 // setStreamInQueuePlaying(false)
                 streamInQueuePlaying = false
-                talkStart && updateIsRecording(true)
+                startTalk && updateIsRecording(true)
                 break
             }
             if (textPlay) {
@@ -266,28 +267,12 @@ export default function SpeechText({}: {}) {
     useEffect(() => {
         if (!talkStart) {
             updateIsRecording(false)
+            setStartTalk(false)
         } else {
             updateIsRecording(true)
+            setStartTalk(true)
         }
     }, [talkStart])
-
-    const textLengthRef = useRef(0)
-    const [textSpeed, setTextSpeed] = useState(0)
-    useEffect(() => {
-        const interval = setTimeout(() => {
-            const currentLength = _.map(recordedTextList, 'text').join('').length
-            const diff = currentLength - textLengthRef.current
-            const speed = diff * (Math.random() > 0.5 ? 15 : 20) + Math.ceil(Math.random() * 10)
-            setTextSpeed(speed)
-            console.log(`diff`, diff, speed)
-            textLengthRef.current = currentLength
-        }, 30)
-
-        // return () => {
-        //     console.log(`clear interval`)
-        //     clearInterval(interval);
-        // }
-    }, [recordedTextList, isRecording])
 
     const handleOnVoicePick = (voice: Record<string, any>) => {
         console.log(`handleOnVoicePick`, voice)
@@ -345,9 +330,8 @@ export default function SpeechText({}: {}) {
                         </div>
                     )
                 })} */}
-                    <CssVisualizer isMicOn={isRecording || false} />
+                    <CssVisualizer isMicOn={talkStart || false} isSignle={isRecording || false} />
                     {/* <AudioVisualizer isMicOn={isRecording || false} /> */}
-                    {/* <TextVisualizer textSpeed={textSpeed} /> */}
                 </div>
                 <div className="flex functional flex-row justify-between items-center">
                     <div className="flex flex-row h-5 gap-2 items-center font-semibold text-sm">
