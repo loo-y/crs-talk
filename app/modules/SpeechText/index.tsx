@@ -12,7 +12,7 @@ import CssVisualizer from '../AudioVisualizer/CssVisualizer'
 import VoicePick from '../VoicePick'
 import { Toaster } from '@/components/ui/sonner'
 import { toast } from 'sonner'
-import { jailbrokenDan, psychological } from '@/shared/prompts'
+import { jailbrokenDan, tryZhCN, psychological } from '@/shared/prompts'
 
 const textAudioPlayQueue: string[] = []
 let streamInQueuePlaying = false
@@ -25,7 +25,7 @@ export default function SpeechText({}: {}) {
     >([
         {
             role: 'system',
-            content: psychological,
+            content: tryZhCN,
         },
     ])
     const [startTalk, setStartTalk] = useState(false)
@@ -667,7 +667,7 @@ const helperGetAIResponse = async ({
             queryOpenAI: true,
             openAIParams: {
                 baseUrl: `https://openrouter.ai/api/v1`, // 'https://api.deepseek.com/v1/',
-                model: `openai/gpt-3.5-turbo`, // `meta-llama/llama-3-8b-instruct:free`, // `google/gemini-flash-1.5`, // `openai/gpt-4o`, // 'deepseek-chat', // `mistralai/mistral-7b-instruct`,
+                model: `meta-llama/llama-3-8b-instruct:free`, // `meta-llama/llama-3-8b-instruct:free`, // `google/gemini-flash-1.5`, // `openai/gpt-4o`, // 'deepseek-chat', // `mistralai/mistral-7b-instruct`,
             },
             // queryMoonshot: true,
             // queryGroq: true,
